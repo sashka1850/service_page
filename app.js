@@ -1,0 +1,230 @@
+import { config, prices, services, offers, team, getPrice, spaceAlbums } from './data.js';
+const $ = (selector) => document.querySelector(selector);
+const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(value);
+const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+$('#services-list').innerHTML = services.map(s => `<article class="service-card"><span class="card-number">${s.icon} /</span><h3>${escape(s.title)}</h3><p>${escape(s.text)}</p><a href="${s.target}" ${s.target === '#contacts' ? `data-service="${escape(s.title)}"` : ''}>${escape(s.action)} <span>↗</span></a></article>`).join('');
+$('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><a class="button light-button" href="#contacts" data-service="${escape(s.title)}">Обсудить диагностику <span>↗</span></a></article>`).join('');
+$('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
+const brand = $('#brand'), model = $('#model');
+Object.keys(prices).forEach(name => brand.add(new Option(name, name)));
+function updatePrice() {
+  const value = getPrice(brand.value, model.value);
+  $('#price').textContent = value === null ? '—' : money(value);
+  $('#price-note').textContent = value === null ? 'Выберите ваш автомобиль' : `${brand.value} ${model.value} · предварительный расчёт`;
+}
+brand.addEventListener('change', () => {
+  model.replaceChildren(new Option(brand.value ? 'Выберите модель' : 'Сначала выберите марку', ''));
+  model.disabled = !brand.value;
+  if (brand.value) Object.keys(prices[brand.value]).forEach(name => model.add(new Option(name, name)));
+  updatePrice();
+});
+model.addEventListener('change', updatePrice);
+$('#calculator-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const value = getPrice(brand.value, model.value);
+  if (value === null) return;
+  $('#selected-service').textContent = `Ваш выбор: ТО ${brand.value} ${model.value}. Предварительно ${money(value)}. Запись ещё не оформлена.`;
+  location.hash = 'contacts';
+});
+document.querySelectorAll('[data-service]').forEach(link => link.addEventListener('click', () => {
+  $('#selected-service').textContent = `Вас интересует: ${link.dataset.service}. Запись ещё не оформлена.`;
+}));
+const menuButton = $('.menu-toggle'), navigation = $('#navigation');
+function closeMenu() { menuButton.setAttribute('aria-expanded', 'false'); navigation.classList.remove('is-open'); }
+menuButton.addEventListener('click', () => {
+  const open = menuButton.getAttribute('aria-expanded') !== 'true';
+  menuButton.setAttribute('aria-expanded', String(open)); navigation.classList.toggle('is-open', open);
+});
+navigation.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+const contactLinks = [];
+if (/^\+[1-9]\d{7,14}$/.test(config.phone)) contactLinks.push({href: `tel:${config.phone}`, text: config.phone});
+if (/^https:\/\/t\.me\/[a-zA-Z0-9_]+$/.test(config.telegram)) contactLinks.push({href: config.telegram, text: 'Написать в Telegram'});
+for (const item of contactLinks) { const a = document.createElement('a'); a.className = 'button primary'; a.href = item.href; a.textContent = item.text; $('#contact-actions').append(a); }
+if (contactLinks.length) $('#contact-status').textContent = 'Свяжитесь с нами, чтобы уточнить стоимость и время визита.';
+$('.contact-card > p').textContent = [config.address, config.house, config.hours].filter(Boolean).join(' · ');
+$('#year').textContent = new Date().getFullYear();
+if (config.heroVideo && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const video = $('.hero-video'); video.src = config.heroVideo;
+  video.addEventListener('playing', () => { video.hidden = false; });
+  video.play().catch(() => { video.hidden = true; });
+}
+
+// Общий просмотрщик; native dialog удерживает фокус внутри и поддерживает Escape.
+const photoViewer = document.createElement('dialog');
+photoViewer.className = 'photo-viewer';
+photoViewer.setAttribute('aria-label', 'Просмотр фотографий');
+photoViewer.innerHTML = `<div class="viewer-shell"><header class="viewer-header"><p class="viewer-title" aria-live="polite"></p><button class="viewer-close" type="button" aria-label="Закрыть просмотр">✕</button></header><div class="viewer-image"></div><footer class="viewer-footer"><button class="viewer-prev" type="button" aria-label="Предыдущее фото">←</button><span class="viewer-counter" aria-live="polite"></span><button class="viewer-next" type="button" aria-label="Следующее фото">→</button></footer></div>`;
+document.body.append(photoViewer);
+let activeAlbum = null;
+let previousOverflow = '';
+let viewerTrigger = null;
+function updateViewer() {
+  if (!activeAlbum) return;
+  const { images, photos, index, title } = activeAlbum;
+  const image = images[index].cloneNode(true);
+  image.hidden = false;
+  if (image.tagName === 'IMG') image.loading = 'eager';
+  photoViewer.querySelector('.viewer-image').replaceChildren(image);
+  photoViewer.querySelector('.viewer-title').textContent = `${title} · ${photos[index].alt}`;
+  photoViewer.querySelector('.viewer-counter').textContent = `${index + 1} / ${images.length}`;
+  photoViewer.querySelector('.viewer-prev').disabled = images.length < 2;
+  photoViewer.querySelector('.viewer-next').disabled = images.length < 2;
+}
+function openViewer(album, trigger) {
+  activeAlbum = album; viewerTrigger = trigger;
+  previousOverflow = document.body.style.overflow;
+  updateViewer(); photoViewer.showModal(); document.body.style.overflow = 'hidden';
+  photoViewer.querySelector('.viewer-close').focus();
+}
+function stepViewer(direction) {
+  if (!activeAlbum) return;
+  activeAlbum.index = (activeAlbum.index + direction + activeAlbum.images.length) % activeAlbum.images.length;
+  activeAlbum.show(activeAlbum.index); updateViewer();
+}
+photoViewer.querySelector('.viewer-close').addEventListener('click', () => photoViewer.close());
+photoViewer.querySelector('.viewer-prev').addEventListener('click', () => stepViewer(-1));
+photoViewer.querySelector('.viewer-next').addEventListener('click', () => stepViewer(1));
+photoViewer.addEventListener('click', event => { if (event.target === photoViewer) photoViewer.close(); });
+photoViewer.addEventListener('close', () => {
+  document.body.style.overflow = previousOverflow;
+  photoViewer.querySelector('.viewer-image').replaceChildren();
+  activeAlbum = null; viewerTrigger?.focus();
+});
+photoViewer.addEventListener('keydown', event => {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault(); stepViewer(event.key === 'ArrowRight' ? 1 : -1);
+  }
+});
+let viewerTouch = null;
+photoViewer.querySelector('.viewer-image').addEventListener('touchstart', event => {
+  viewerTouch = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+}, { passive: true });
+photoViewer.querySelector('.viewer-image').addEventListener('touchend', event => {
+  if (!viewerTouch) return;
+  const dx = event.changedTouches[0].clientX - viewerTouch.x;
+  const dy = event.changedTouches[0].clientY - viewerTouch.y;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) stepViewer(dx < 0 ? 1 : -1);
+  viewerTouch = null;
+}, { passive: true });
+photoViewer.querySelector('.viewer-image').addEventListener('touchcancel', () => { viewerTouch = null; });
+
+// Каждая карточка имеет независимый альбом без автоматического перелистывания.
+document.querySelectorAll('.space-card, .team-card').forEach((card) => {
+  const isTeam = card.classList.contains('team-card');
+  const siblings = [...card.parentElement.children];
+  const albumIndex = siblings.indexOf(card);
+  const photos = (isTeam ? team[albumIndex]?.photos : spaceAlbums[albumIndex]) || [];
+  const original = card.querySelector('img');
+  if (!photos.length || !original) return;
+  const gallery = document.createElement('div');
+  gallery.className = isTeam ? 'space-gallery team-gallery' : 'space-gallery';
+  gallery.setAttribute('role', 'region');
+  gallery.setAttribute('aria-label', `Фотоальбом: ${card.querySelector('h3').textContent}`);
+  original.replaceWith(gallery);
+  gallery.innerHTML = `<div class="space-slides"></div><div class="space-controls"><div class="photo-dots" role="group" aria-label="Выбор фотографии"></div></div><div class="photo-count" aria-live="polite" aria-atomic="true"></div>`;
+  const slides = gallery.querySelector('.space-slides');
+  const dots = gallery.querySelector('.photo-dots');
+  let current = 0;
+  let suppressOpenUntil = 0;
+  const zoomButton = document.createElement('button');
+  zoomButton.type = 'button'; zoomButton.className = 'photo-enlarge';
+  zoomButton.setAttribute('aria-label', 'Увеличить фото');
+  zoomButton.setAttribute('aria-haspopup', 'dialog');
+  zoomButton.innerHTML = '<span>Увеличить ↗</span>';
+  gallery.append(zoomButton);
+  zoomButton.addEventListener('click', () => {
+    if (Date.now() < suppressOpenUntil) return;
+    openViewer({ images, photos, index: current, title: card.querySelector('h3').textContent, show }, zoomButton);
+  });
+  const images = photos.map((photo, index) => {
+    const img = document.createElement(photo.src ? 'img' : 'div');
+    if (photo.src) {
+      img.src = photo.src; img.alt = photo.alt; img.loading = 'lazy'; img.draggable = false;
+      if (photo.kind === 'certificate') img.classList.add('certificate-image');
+    } else {
+      img.className = `team-placeholder ${photo.kind === 'certificate' ? 'certificate-placeholder' : 'portrait-placeholder'}`;
+      img.setAttribute('role', 'img'); img.setAttribute('aria-label', photo.alt);
+      img.innerHTML = photo.kind === 'certificate'
+        ? '<div class="certificate-sheet"><div class="certificate-word">СЕРТИФИКАТ</div><div class="certificate-rule"></div><div class="certificate-dummy">ОБРАЗЕЦ</div><div class="certificate-lines"></div><div class="certificate-foot">Место для документа</div></div><div class="placeholder-caption">Сертификат · заглушка</div>'
+        : '<div class="portrait-initials" aria-hidden="true">' + escape(card.querySelector('h3').textContent.split(' ').map(word => word[0]).join('')) + '</div><div class="placeholder-caption">Портрет · заглушка</div>';
+    }
+    img.hidden = index !== 0; slides.append(img);
+    const dot = document.createElement('button');
+    dot.type = 'button'; dot.setAttribute('aria-label', `Фото ${index + 1}: ${photo.alt}`);
+    dot.addEventListener('click', () => show(index)); dots.append(dot);
+    return img;
+  });
+  let slideAnimations = [];
+  let slideRevision = 0;
+  function show(index) {
+    const previous = current;
+    const next = (index + photos.length) % photos.length;
+    const direction = index >= photos.length ? 1 : index < 0 ? -1 : Math.sign(next - previous);
+    const revision = ++slideRevision;
+    slideAnimations.forEach(animation => animation.cancel());
+    slideAnimations = [];
+    current = next;
+    images.forEach((img, i) => {
+      img.hidden = i !== current;
+      img.setAttribute('aria-hidden', String(i !== current));
+    });
+    if (previous !== current && !matchMedia('(prefers-reduced-motion: reduce)').matches && typeof images[current].animate === 'function') {
+      const outgoing = images[previous];
+      const incoming = images[current];
+      outgoing.hidden = false;
+      const timing = { duration: 380, easing: 'cubic-bezier(.22,.61,.36,1)' };
+      slideAnimations = [
+        outgoing.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-direction * 100}%)` }], timing),
+        incoming.animate([{ transform: `translateX(${direction * 100}%)` }, { transform: 'translateX(0)' }], timing),
+      ];
+      Promise.allSettled(slideAnimations.map(animation => animation.finished)).then(() => {
+        if (revision !== slideRevision) return;
+        outgoing.hidden = true;
+        slideAnimations = [];
+      });
+    }
+    [...dots.children].forEach((dot, i) => dot.setAttribute('aria-pressed', String(i === current)));
+    zoomButton.setAttribute('aria-label', `Увеличить: ${photos[current].alt}`);
+    gallery.querySelector('.photo-count').textContent = `${isTeam ? (photos[current].kind === 'certificate' ? 'Сертификат · ' : 'Портрет · ') : ''}${current + 1} / ${photos.length}`;
+  }
+  gallery.addEventListener('keydown', event => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault(); show(current + (event.key === 'ArrowRight' ? 1 : -1));
+    }
+  });
+  let touchStart = null;
+  gallery.addEventListener('touchstart', event => {
+    touchStart = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+  }, { passive: true });
+  gallery.addEventListener('touchend', event => {
+    if (!touchStart) return;
+    const dx = event.changedTouches[0].clientX - touchStart.x;
+    const dy = event.changedTouches[0].clientY - touchStart.y;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) { suppressOpenUntil = Date.now() + 500; show(current + (dx < 0 ? 1 : -1)); }
+    touchStart = null;
+  }, { passive: true });
+  gallery.addEventListener('touchcancel', () => { touchStart = null; });
+  // Desktop dragging complements touch swipes; dragging must not open the viewer.
+  let mouseStart = null;
+  zoomButton.addEventListener('pointerdown', event => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    mouseStart = { x: event.clientX, y: event.clientY };
+    zoomButton.setPointerCapture(event.pointerId);
+  });
+  zoomButton.addEventListener('pointerup', event => {
+    if (!mouseStart) return;
+    const dx = event.clientX - mouseStart.x;
+    const dy = event.clientY - mouseStart.y;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+      suppressOpenUntil = Date.now() + 500;
+      show(current + (dx < 0 ? 1 : -1));
+    }
+    mouseStart = null;
+    if (zoomButton.hasPointerCapture(event.pointerId)) zoomButton.releasePointerCapture(event.pointerId);
+  });
+  zoomButton.addEventListener('pointercancel', () => { mouseStart = null; });
+  gallery.querySelector('.space-controls').hidden = photos.length < 2;
+  gallery.querySelector('.photo-count').hidden = photos.length < 2;
+  show(0);
+});
