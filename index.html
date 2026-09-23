@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Genesis Team Service — ремонт и обслуживание Hyundai, Kia и Genesis в Нижнем Новгороде. Техническое обслуживание, диагностика и ремонт.">
+  <meta name="theme-color" content="#161b1b">
+  <title>GTS — сервис Hyundai, Kia и Genesis в Нижнем Новгороде</title>
+  <link rel="stylesheet" href="./src/styles.css">
+  <script defer src="./src/site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
+  <header class="header">
+    <a class="logo" href="#" aria-label="Genesis Team Service — главная">GTS<span>GENESIS<br>TEAM SERVICE</span></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="navigation" aria-label="Открыть меню">Меню <span>☰</span></button>
+    <nav id="navigation" aria-label="Основная навигация">
+      <a href="#services">Услуги</a><a href="#calculator">Стоимость ТО</a><a href="#space">О сервисе</a><a href="#team">Команда</a><a href="#contacts">Контакты</a>
+    </nav>
+    <a class="header-action" href="#contacts">Связаться <span>↗</span></a>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <img class="hero-image" src="./assets/hero.jpg" alt="" fetchpriority="high">
+      <video class="hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true" hidden></video>
+      <div class="hero-content container">
+        <p class="eyebrow light">Нижний Новгород · Hyundai / Kia / Genesis</p>
+        <h1 id="hero-title">Ваш автомобиль.<br>Наша специализация.</h1>
+        <p class="hero-description">Ремонт и обслуживание корейских автомобилей.<br>От планового ТО до сложной диагностики.</p>
+        <div class="actions"><a class="button primary" href="#calculator">Рассчитать стоимость ТО <span>↗</span></a><a class="button outline" href="#services">Подобрать услугу</a></div>
+        <div class="hero-bottom"><span>GENESIS TEAM SERVICE</span><span>Знаем автомобили.<br>Ценим ваше доверие.</span><a href="#services" aria-label="Перейти к услугам">↓</a></div>
+      </div>
+    </section>
+    <div class="brand-strip container" aria-label="Обслуживаемые марки"><span>Одна команда.<br>Три знакомых бренда.</span><strong>HYUNDAI</strong><strong>KIA</strong><strong>GENESIS</strong></div>
+    <section id="services" class="section container">
+      <div class="section-heading"><div><p class="eyebrow">01 / Что мы делаем</p><h2>Сервис под вашу задачу</h2></div><p>Плановое обслуживание или неисправность —<br>начнём с того, что нужно вашему автомобилю.</p></div>
+      <div class="services-grid" id="services-list"></div>
+    </section>
+    <section id="calculator" class="calculator-section">
+      <div class="container calculator-layout">
+        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Выберите марку и модель, чтобы узнать предварительную стоимость ТО.</p><p class="fine-print">Стоимость перенесена из исходного наброска. Состав работ, расходные материалы и итоговую сумму необходимо уточнить перед записью.</p></div>
+        <form id="calculator-form" class="calculator-card">
+          <h3>Калькулятор ТО</h3>
+          <div class="form-row"><label>Марка<select id="brand" required><option value="">Выберите марку</option></select></label><label>Модель<select id="model" required disabled><option value="">Сначала выберите марку</option></select></label></div>
+          <div class="price-result" aria-live="polite" aria-atomic="true"><span>Предварительная стоимость</span><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
+          <button class="button dark" type="submit">Обсудить обслуживание <span>↗</span></button>
+          <p class="form-note">Расчёт не является записью. Следующий шаг — уточнение деталей с сервисом.</p>
+        </form>
+      </div>
+    </section>
+    <section id="offers" class="section container">
+      <div class="section-heading"><div><p class="eyebrow">03 / Диагностика</p><h2>Понять причину.<br>Найти решение.</h2></div><p>Конкретные проверки<br>для важных систем автомобиля.</p></div>
+      <div id="offers-list" class="offers-grid"></div>
+      <p class="fine-print">Цены из исходного сайта. Актуальность и применимость к вашему автомобилю уточняются при обращении.</p>
+    </section>
+    <section id="space" class="section space-section"><div class="container">
+      <div class="section-heading"><div><p class="eyebrow">04 / Пространство сервиса</p><h2>Для автомобиля.<br>И для вас.</h2></div><p>Рабочее пространство команды<br>и место, где можно спокойно подождать.</p></div>
+      <div class="space-grid">
+        <article class="space-card"><img src="./assets/exterior.jpg" loading="lazy" alt="Временное изображение фасада сервиса"><div><span>01</span><h3>Сервисный центр</h3><p>Нижний Новгород, Московское шоссе. Подробности проезда — в разделе контактов.</p></div></article>
+        <article class="space-card"><img src="./assets/lounge.jpg" loading="lazy" alt="Клиентская зона из наброска сайта"><div><span>02</span><h3>Клиентская зона</h3><p>Мягкая мебель, кофе и Wi-Fi, пока команда занимается вашим автомобилем.</p></div></article>
+        <article class="space-card"><img src="./assets/workshop.png" loading="lazy" alt="Ремонтная зона из наброска сайта"><div><span>03</span><h3>Ремонтная зона</h3><p>Посты для обслуживания, диагностики и ремонта в одном пространстве.</p></div></article>
+      </div>
+    </div></section>
+    <section id="team" class="section container">
+      <div class="section-heading"><div><p class="eyebrow">05 / Люди за работой</p><h2>Знакомьтесь, ваша команда.</h2></div><p>Специалисты по Hyundai, Kia и Genesis.<br>Личный подход к каждому автомобилю.</p></div>
+      <div class="team-grid" id="team-list"></div>
+    </section>
+    <section class="section faq-section container" id="questions"><div><p class="eyebrow">06 / Перед визитом</p><h2>Важные детали</h2></div><div class="faq-list">
+      <details><summary>Что входит в стоимость ТО?</summary><p>Состав зависит от автомобиля и регламента обслуживания. До записи уточните перечень работ, масло, фильтры и другие расходные материалы. Калькулятор пока показывает предварительные цены.</p></details>
+      <details><summary>Если моей модели нет в калькуляторе?</summary><p>Обратитесь в сервис и укажите модель, год выпуска, двигатель и пробег. Отсутствие модели в списке не означает, что сервис не сможет помочь.</p></details>
+      <details><summary>Как подготовиться к диагностике?</summary><p>Запишите, когда возникает неисправность и какие предупреждения показывает автомобиль. Если есть история предыдущих ремонтов, возьмите её с собой.</p></details>
+    </div></section>
+    <section id="contacts" class="contacts-section"><div class="container contacts-layout"><div><p class="eyebrow light">07 / До встречи в сервисе</p><h2>Начнём с вашего<br>автомобиля.</h2><p>Расскажите, какое обслуживание требуется<br>или что беспокоит в работе машины.</p></div><div class="contact-card"><h3>Genesis Team Service</h3><p>Нижний Новгород<br>Московское шоссе</p><p id="contact-status" class="contact-status">Контакты для записи скоро появятся.</p><div id="contact-actions" class="actions"></div><p id="selected-service" aria-live="polite"></p></div></div></section>
+  </main>
+  <footer class="container footer"><a class="logo" href="#">GTS<span>GENESIS<br>TEAM SERVICE</span></a><p>© <span id="year"></span> Genesis Team Service</p><a href="#main">Наверх ↑</a></footer>
+  <noscript><p class="noscript">Для калькулятора и списка услуг включите JavaScript.</p></noscript>
+</body>
+</html>
