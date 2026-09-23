@@ -509,6 +509,10 @@ select:disabled {
   gap:24px;
 }
 
+.mobile-scroll-progress {
+  display:none;
+}
+
 .offer-card {
   border:1px solid var(--line);
   padding:30px;
@@ -896,6 +900,45 @@ select:disabled {
   }
   .offers-grid {
     grid-template-columns:1fr;
+  }
+  .mobile-card-scroll {
+    display:flex;
+    flex-direction:column;
+    max-height:min(620px,72vh);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scroll-snap-type:y mandatory;
+    -webkit-overflow-scrolling:touch;
+    padding-right:2px;
+  }
+  .mobile-card-scroll::-webkit-scrollbar {
+    width:0;
+    height:0;
+  }
+  .mobile-card-scroll > .offer-card,
+  .mobile-card-scroll > .space-card,
+  .mobile-card-scroll > .team-card {
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+    flex:0 0 auto;
+  }
+  .mobile-scroll-progress {
+    display:block;
+    width:calc(100% - 56px);
+    max-width:1280px;
+    height:2px;
+    margin:18px auto 0;
+    overflow:hidden;
+    background:#171e1c20;
+  }
+  .mobile-scroll-progress span {
+    display:block;
+    width:100%;
+    height:100%;
+    background:#171e1c;
+    transform:scaleX(0);
+    transform-origin:left center;
+    transition:transform .16s linear;
   }
   .offer-card h3 {
     min-height:0;
