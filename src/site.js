@@ -178,6 +178,105 @@ function setupRevealAnimations() {
 
 setupRevealAnimations();
 
+function isMobileViewport() {
+  return matchMedia('(max-width: 800px)').matches;
+}
+
+function setupMobileSectionSwipe() {
+  const sections = ['.hero', '#services', '#calculator', '#offers', '#space', '#team', '#questions', '#contacts']
+    .map(selector => $(selector))
+    .filter(Boolean);
+  let touchStart = null;
+  let snapLocked = false;
+  const ignoredSelector = 'select, input, textarea, button, a, dialog, .photo-viewer, .space-gallery, .mobile-card-scroll';
+
+  function nearestSectionIndex() {
+    const viewportMiddle = window.innerHeight / 2;
+    let bestIndex = 0;
+    let bestDistance = Infinity;
+    sections.forEach((section, index) => {
+      const rect = section.getBoundingClientRect();
+      const distance = Math.abs((rect.top + rect.height / 2) - viewportMiddle);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    });
+    return bestIndex;
+  }
+
+  function cardScrollerCanMove(target, direction) {
+    const scroller = target.closest?.('.mobile-card-scroll');
+    if (!scroller || scroller.scrollHeight <= scroller.clientHeight + 2) return false;
+    return direction > 0
+      ? scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 2
+      : scroller.scrollTop > 2;
+  }
+
+  document.addEventListener('touchstart', (event) => {
+    if (!isMobileViewport() || event.touches.length !== 1 || document.body.classList.contains('menu-open')) return;
+    if (event.target.closest(ignoredSelector)) return;
+    touchStart = { x: event.touches[0].clientX, y: event.touches[0].clientY, time: performance.now(), target: event.target };
+  }, { passive: true });
+
+  document.addEventListener('touchend', (event) => {
+    if (!touchStart || snapLocked || !isMobileViewport()) {
+      touchStart = null;
+      return;
+    }
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - touchStart.x;
+    const dy = touch.clientY - touchStart.y;
+    const elapsed = Math.max(performance.now() - touchStart.time, 1);
+    const distance = Math.abs(dy);
+    const velocity = distance / elapsed;
+    const direction = dy < 0 ? 1 : -1;
+    const isFastVerticalSwipe = distance > 72 && velocity > 0.55 && Math.abs(dy) > Math.abs(dx) * 1.35;
+
+    if (!isFastVerticalSwipe || cardScrollerCanMove(touchStart.target, direction)) {
+      touchStart = null;
+      return;
+    }
+
+    const current = nearestSectionIndex();
+    const next = Math.max(0, Math.min(sections.length - 1, current + direction));
+    if (next !== current) {
+      snapLocked = true;
+      sections[next].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.setTimeout(() => { snapLocked = false; }, 720);
+    }
+    touchStart = null;
+  }, { passive: true });
+}
+
+function setupMobileCardProgress() {
+  const blocks = [
+    { section: $('#offers'), scroller: $('#offers-list') },
+    { section: $('#space'), scroller: document.querySelector('#space .space-grid') },
+    { section: $('#team'), scroller: $('#team-list') },
+  ].filter(item => item.section && item.scroller);
+
+  blocks.forEach(({ section, scroller }) => {
+    scroller.classList.add('mobile-card-scroll');
+    const progress = document.createElement('div');
+    progress.className = 'mobile-scroll-progress';
+    progress.innerHTML = '<span></span>';
+    section.append(progress);
+    const bar = progress.querySelector('span');
+    const update = () => {
+      const max = Math.max(scroller.scrollHeight - scroller.clientHeight, 1);
+      const value = Math.min(scroller.scrollTop / max, 1);
+      bar.style.transform = `scaleX(${Number.isFinite(value) ? value : 0})`;
+    };
+    scroller.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  });
+}
+
+setupMobileSectionSwipe();
+setupMobileCardProgress();
+
 // Общий просмотрщик; native dialog удерживает фокус внутри и поддерживает Escape.
 const photoViewer = document.createElement('dialog');
 photoViewer.className = 'photo-viewer';
