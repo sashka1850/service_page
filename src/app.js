@@ -50,6 +50,74 @@ if (config.heroVideo && !matchMedia('(prefers-reduced-motion: reduce)').matches)
   video.play().catch(() => { video.hidden = true; });
 }
 
+
+function typeText(element) {
+  const text = element.dataset.typeText || element.textContent.trim();
+  if (!text || element.dataset.typed === 'true') return;
+  element.dataset.typed = 'true';
+  element.dataset.typeText = text;
+  element.textContent = '';
+  let index = 0;
+  const interval = window.setInterval(() => {
+    element.textContent = text.slice(0, index + 1);
+    index += 1;
+    if (index >= text.length) {
+      window.clearInterval(interval);
+      element.classList.add('is-typed');
+    }
+  }, 18);
+}
+
+function setupRevealAnimations() {
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const animatedBlocks = [
+    { root: $('.hero'), items: ['.eyebrow', 'h1', '.hero-description', '.actions .button', '.hero-bottom'] },
+    { root: $('#services'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.service-card'] },
+    { root: $('#calculator'), items: ['.eyebrow', 'h2', '.section-description', '.fine-print', '.calculator-card'] },
+    { root: $('#offers'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.offer-card', '.fine-print'] },
+    { root: $('#space'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.space-card'] },
+    { root: $('#team'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.team-card'] },
+  ].filter(block => block.root);
+
+  document.documentElement.classList.add('animate-ready');
+
+  animatedBlocks.forEach((block) => {
+    let order = 0;
+    block.items.forEach((selector) => {
+      block.root.querySelectorAll(selector).forEach((element) => {
+        element.classList.add('reveal-item');
+        element.style.setProperty('--reveal-delay', `${Math.min(order * 90, 540)}ms`);
+        order += 1;
+      });
+    });
+    block.root.querySelectorAll('h1, h2').forEach(element => element.classList.add('reveal-heading'));
+    block.root.querySelectorAll('.hero-description, .section-heading > p, .section-description').forEach(element => {
+      element.classList.add('typewriter-text');
+      element.dataset.typeText = element.textContent.trim();
+      element.style.minHeight = `${element.offsetHeight}px`;
+    });
+  });
+
+  if (reduceMotion) {
+    document.querySelectorAll('.reveal-item').forEach(element => element.classList.add('is-visible'));
+    document.querySelectorAll('.typewriter-text').forEach(element => element.classList.add('is-typed'));
+    return;
+  }
+
+  const revealObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      if (entry.target.classList.contains('typewriter-text')) typeText(entry.target);
+      observer.unobserve(entry.target);
+    });
+  }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
+
+  document.querySelectorAll('.reveal-item').forEach(element => revealObserver.observe(element));
+}
+
+setupRevealAnimations();
+
 // Общий просмотрщик; native dialog удерживает фокус внутри и поддерживает Escape.
 const photoViewer = document.createElement('dialog');
 photoViewer.className = 'photo-viewer';
