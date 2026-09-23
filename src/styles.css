@@ -231,6 +231,54 @@ h1 {
   transform:translateY(-2px);
 }
 
+
+.animate-ready .reveal-item {
+  opacity:0;
+  transform:translateY(34px);
+  transition:
+    opacity 760ms cubic-bezier(.22,.61,.36,1),
+    transform 760ms cubic-bezier(.22,.61,.36,1);
+  transition-delay:var(--reveal-delay,0ms);
+  will-change:opacity,transform;
+}
+
+.animate-ready .reveal-heading {
+  transform:translateY(18px);
+  transition-duration:880ms;
+}
+
+.animate-ready .actions.reveal-item,
+.animate-ready .button.reveal-item {
+  transform:translateY(16px);
+  transition-duration:680ms;
+}
+
+.animate-ready .reveal-item.is-visible {
+  opacity:1;
+  transform:translateY(0);
+}
+
+.typewriter-text {
+  min-height:calc(1em * 1.65);
+}
+
+.typewriter-text:not(.is-typed)::after {
+  content:'';
+  display:inline-block;
+  width:1px;
+  height:1em;
+  margin-left:3px;
+  vertical-align:-.12em;
+  background:currentColor;
+  animation:typing-caret 860ms steps(1,end) infinite;
+}
+
+@keyframes typing-caret {
+  50% {
+    opacity:0;
+  }
+}
+
 .primary {
   background:var(--accent);
   color:var(--dark);
