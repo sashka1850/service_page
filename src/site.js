@@ -51,8 +51,8 @@ const spaceAlbums = [
 const $ = (selector) => document.querySelector(selector);
 const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-$('#services-list').innerHTML = services.map(s => `<article class="service-card"><span class="card-number">${s.icon} /</span><h3>${escape(s.title)}</h3><p>${escape(s.text)}</p><a href="${s.target}" ${s.target === '#contacts' ? `data-service="${escape(s.title)}"` : ''}>${escape(s.action)} <span>↗</span></a></article>`).join('');
-$('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><a class="button light-button" href="#contacts" data-service="${escape(s.title)}">Записаться по акции <span>↗</span></a></article>`).join('');
+$('#services-list').innerHTML = services.map(s => `<article class="service-card"><span class="card-number">${s.icon} /</span><h3>${escape(s.title)}</h3><p>${escape(s.text)}</p><a href="${s.target}" ${s.target === '#contacts' ? `data-service="${escape(s.title)}"` : ''}>${escape(s.action)}</a></article>`).join('');
+$('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><a class="button light-button" href="#contacts" data-service="${escape(s.title)}">Записаться по акции</a></article>`).join('');
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model');
 Object.keys(prices).forEach(name => brand.add(new Option(name, name)));
@@ -248,7 +248,7 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
   zoomButton.type = 'button'; zoomButton.className = 'photo-enlarge';
   zoomButton.setAttribute('aria-label', 'Увеличить фото');
   zoomButton.setAttribute('aria-haspopup', 'dialog');
-  zoomButton.innerHTML = '<span>Увеличить ↗</span>';
+  zoomButton.innerHTML = '<span>Увеличить</span>';
   gallery.append(zoomButton);
   zoomButton.addEventListener('click', () => {
     if (Date.now() < suppressOpenUntil) return;
