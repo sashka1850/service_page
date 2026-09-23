@@ -65,7 +65,7 @@ function typeText(element) {
       window.clearInterval(interval);
       element.classList.add('is-typed');
     }
-  }, 18);
+  }, 30);
 }
 
 function setupRevealAnimations() {
