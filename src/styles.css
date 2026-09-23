@@ -260,6 +260,12 @@ h1 {
 
 .typewriter-text {
   min-height:calc(1em * 1.65);
+  opacity:0;
+  transition:opacity 1050ms ease;
+}
+
+.typewriter-text.is-visible {
+  opacity:1;
 }
 
 .typewriter-text:not(.is-typed)::after {
