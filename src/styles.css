@@ -24,6 +24,10 @@ body {
   margin:0;
 }
 
+body.menu-open {
+  overflow:hidden;
+}
+
 a {
   color:inherit;
   text-decoration:none;
@@ -765,7 +769,8 @@ select:disabled {
     min-height:78px;
     justify-content:space-between;
     padding:15px 24px;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
+    z-index:50;
   }
   .logo {
     font-size:34px;
@@ -785,25 +790,75 @@ select:disabled {
     border:1px solid var(--line);
     padding:0;
     border-radius:3px;
+    position:relative;
+    z-index:42;
+    transition:background .25s ease,border-color .25s ease;
   }
   .menu-toggle span {
     width:20px;
     height:2px;
     background:var(--ink);
     border-radius:2px;
+    transition:transform .25s ease,opacity .2s ease;
+  }
+  .menu-toggle[aria-expanded="true"] {
+    background:var(--ink);
+    border-color:var(--ink);
+  }
+  .menu-toggle[aria-expanded="true"] span {
+    background:var(--paper);
+  }
+  .menu-toggle[aria-expanded="true"] span:nth-child(1) {
+    transform:translateY(7px) rotate(45deg);
+  }
+  .menu-toggle[aria-expanded="true"] span:nth-child(2) {
+    opacity:0;
+  }
+  .menu-toggle[aria-expanded="true"] span:nth-child(3) {
+    transform:translateY(-7px) rotate(-45deg);
+  }
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:30;
+    background:rgba(23,30,28,.45);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .34s ease;
+  }
+  body.menu-open::before {
+    opacity:1;
+    pointer-events:auto;
   }
   .header nav {
-    display:none;
-    flex-basis:100%;
+    position:fixed;
+    top:0;
+    right:0;
+    bottom:0;
+    z-index:40;
+    display:flex;
+    width:min(360px,82vw);
+    padding:104px 28px 28px;
+    background:var(--paper);
+    border-left:1px solid var(--line);
+    box-shadow:-24px 0 60px -42px #171e1c;
     flex-direction:column;
     gap:0;
+    opacity:0;
+    transform:translateX(100%);
+    pointer-events:none;
+    transition:transform .38s cubic-bezier(.22,.61,.36,1),opacity .28s ease;
   }
   .header nav.is-open {
-    display:flex;
+    opacity:1;
+    transform:translateX(0);
+    pointer-events:auto;
   }
   .header nav a {
-    padding:14px 0;
+    padding:18px 0;
     border-top:1px solid var(--line);
+    font-size:18px;
   }
   .section {
     padding-block:64px;
