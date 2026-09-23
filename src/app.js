@@ -30,13 +30,24 @@ document.querySelectorAll('[data-service]').forEach(link => link.addEventListene
   $('#selected-service').textContent = `Вас интересует: ${link.dataset.service}. Запись ещё не оформлена.`;
 }));
 const menuButton = $('.menu-toggle'), navigation = $('#navigation');
-function closeMenu() { menuButton.setAttribute('aria-expanded', 'false'); navigation.classList.remove('is-open'); }
+function closeMenu() {
+  menuButton.setAttribute('aria-expanded', 'false');
+  navigation.classList.remove('is-open');
+  document.body.classList.remove('menu-open');
+}
 menuButton.addEventListener('click', () => {
   const open = menuButton.getAttribute('aria-expanded') !== 'true';
-  menuButton.setAttribute('aria-expanded', String(open)); navigation.classList.toggle('is-open', open);
+  menuButton.setAttribute('aria-expanded', String(open));
+  navigation.classList.toggle('is-open', open);
+  document.body.classList.toggle('menu-open', open);
 });
 navigation.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+document.addEventListener('click', event => {
+  if (!document.body.classList.contains('menu-open')) return;
+  if (navigation.contains(event.target) || menuButton.contains(event.target)) return;
+  closeMenu();
+});
 const contactLinks = [];
 if (/^\+[1-9]\d{7,14}$/.test(config.phone)) contactLinks.push({href: `tel:${config.phone}`, text: config.phone});
 if (/^https:\/\/t\.me\/[a-zA-Z0-9_]+$/.test(config.telegram)) contactLinks.push({href: config.telegram, text: 'Написать в Telegram'});
