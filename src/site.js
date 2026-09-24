@@ -17,10 +17,10 @@ const prices = {
   Genesis: { G70: 17000, G80: 25000, G90: 35000 },
 };
 const services = [
-  { title: 'Техническое обслуживание', text: 'Плановое обслуживание по регламенту автомобиля. Масло, фильтры и необходимые проверки.', action: 'Рассчитать ТО', target: '#calculator', icon: '01' },
-  { title: 'Ремонт автомобиля', text: 'От отдельных узлов до сложного ремонта агрегатов. Начнём с уточнения задачи.', action: 'Обсудить ремонт', target: '#contacts', icon: '02' },
-  { title: 'Диагностика', text: 'Проверка двигателя, ходовой части и других систем. Поиск причины неисправности.', action: 'Выбрать диагностику', target: '#offers', icon: '03' },
-  { title: 'Детейлинг и доработки', text: 'Полировка, химчистка, защитная плёнка и другие работы по уходу за автомобилем.', action: 'Уточнить возможности', target: '#contacts', icon: '04' },
+  { title: 'Техническое обслуживание', text: 'Плановое обслуживание по регламенту автомобиля. Масло, фильтры и необходимые проверки.', action: 'Записаться', target: '#contacts', icon: '01' },
+  { title: 'Ремонт автомобиля', text: 'От отдельных узлов до сложного ремонта агрегатов. Начнём с уточнения задачи.', action: 'Записаться', target: '#contacts', icon: '02' },
+  { title: 'Диагностика', text: 'Проверка двигателя, ходовой части и других систем. Поиск причины неисправности.', action: 'Записаться', target: '#contacts', icon: '03' },
+  { title: 'Детейлинг и доработки', text: 'Полировка, химчистка, защитная плёнка и другие работы по уходу за автомобилем.', action: 'Записаться', target: '#contacts', icon: '04' },
 ];
 const offers = [
   { title: 'Диагностика двигателя', price: 2999, items: ['Компьютерная диагностика', 'Замер компрессии и эндоскопия', 'Проверка навесного оборудования', 'Осмотр на предмет течей'] },
@@ -51,8 +51,8 @@ const spaceAlbums = [
 const $ = (selector) => document.querySelector(selector);
 const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden><p>${escape(s.text)}</p><a href="${s.target}" ${s.target === '#contacts' ? `data-service="${escape(s.title)}"` : ''}>${escape(s.action)}</a></div></article>`).join('');
-$('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><a class="button light-button" href="#contacts" data-service="${escape(s.title)}">Записаться по акции</a></article>`).join('');
+$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden><p>${escape(s.text)}</p><button class="service-action button light-button" type="button">${escape(s.action)}</button></div></article>`).join('');
+$('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="button light-button" type="button">Записаться по акции</button></article>`).join('');
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model');
 Object.keys(prices).forEach(name => brand.add(new Option(name, name)));
@@ -70,13 +70,6 @@ brand.addEventListener('change', () => {
 model.addEventListener('change', updatePrice);
 $('#calculator-form').addEventListener('submit', event => {
   event.preventDefault();
-  const value = getPrice(brand.value, model.value);
-  if (value === null) return;
-  $('#selected-service').textContent = `Ваш выбор: ТО ${brand.value} ${model.value}. Предварительно ${money(value)}. Запись ещё не оформлена.`;
-  location.hash = 'contacts';
-});
-document.querySelectorAll('[data-service]').forEach(link => link.addEventListener('click', () => {
-  $('#selected-service').textContent = `Вас интересует: ${link.dataset.service}. Запись ещё не оформлена.`;
 }));
 const serviceCards = [...document.querySelectorAll('.service-card')];
 function closeServiceCard(card) {
@@ -280,8 +273,8 @@ function setupMobileCardProgress() {
     section.append(progress);
     const bar = progress.querySelector('span');
     const update = () => {
-      const max = Math.max(scroller.scrollWidth - scroller.clientWidth, 1);
-      const value = Math.min(scroller.scrollLeft / max, 1);
+      const total = Math.max(scroller.scrollWidth, 1);
+      const value = scroller.scrollWidth <= scroller.clientWidth ? 1 : Math.min((scroller.scrollLeft + scroller.clientWidth) / total, 1);
       bar.style.transform = `scaleX(${Number.isFinite(value) ? value : 0})`;
     };
     scroller.addEventListener('scroll', update, { passive: true });
@@ -292,6 +285,27 @@ function setupMobileCardProgress() {
 
 setupMobileSectionSwipe();
 setupMobileCardProgress();
+
+const contactWidget = $('.contact-widget');
+if (contactWidget) {
+  const contactButton = contactWidget.querySelector('.contact-widget-toggle');
+  contactButton.addEventListener('click', () => {
+    const open = contactButton.getAttribute('aria-expanded') !== 'true';
+    contactButton.setAttribute('aria-expanded', String(open));
+    contactWidget.classList.toggle('is-open', open);
+  });
+  document.addEventListener('click', (event) => {
+    if (!contactWidget.classList.contains('is-open')) return;
+    if (contactWidget.contains(event.target)) return;
+    contactButton.setAttribute('aria-expanded', 'false');
+    contactWidget.classList.remove('is-open');
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    contactButton.setAttribute('aria-expanded', 'false');
+    contactWidget.classList.remove('is-open');
+  });
+}
 
 // Общий просмотрщик; native dialog удерживает фокус внутри и поддерживает Escape.
 const photoViewer = document.createElement('dialog');
