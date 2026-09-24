@@ -903,13 +903,15 @@ select:disabled {
   }
   .mobile-card-scroll {
     display:flex;
-    flex-direction:column;
-    max-height:min(620px,72vh);
-    overflow-y:auto;
+    flex-direction:row;
+    gap:16px;
+    overflow-x:auto;
+    overflow-y:hidden;
     overscroll-behavior:contain;
-    scroll-snap-type:y mandatory;
+    scroll-snap-type:x mandatory;
     -webkit-overflow-scrolling:touch;
-    padding-right:2px;
+    padding:0 28px 2px;
+    margin-inline:-28px;
   }
   .mobile-card-scroll::-webkit-scrollbar {
     width:0;
@@ -920,7 +922,7 @@ select:disabled {
   .mobile-card-scroll > .team-card {
     scroll-snap-align:start;
     scroll-snap-stop:always;
-    flex:0 0 auto;
+    flex:0 0 min(360px,82vw);
   }
   .mobile-scroll-progress {
     display:block;
