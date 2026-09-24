@@ -265,28 +265,11 @@ h1 {
 .typewriter-text {
   min-height:calc(1em * 1.65);
   opacity:0;
-  transition:opacity 1050ms ease;
+  transition:opacity 3150ms ease;
 }
 
 .typewriter-text.is-visible {
   opacity:1;
-}
-
-.typewriter-text:not(.is-typed)::after {
-  content:'';
-  display:inline-block;
-  width:1px;
-  height:1em;
-  margin-left:3px;
-  vertical-align:-.12em;
-  background:currentColor;
-  animation:typing-caret 860ms steps(1,end) infinite;
-}
-
-@keyframes typing-caret {
-  50% {
-    opacity:0;
-  }
 }
 
 .primary {
