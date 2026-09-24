@@ -7,7 +7,7 @@ export const config = {
   house: '', // В исходнике расходятся 52б и 52д — требуется подтверждение.
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/service_zone.mp4', // Локальный путь, например ./assets/hero.mp4.
-  maintenanceApiUrl: '', // URL опубликованного веб-приложения Apps Script (.../exec).
+  maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
 };
 export const services = [
   { title: 'Техническое обслуживание', text: 'Плановое обслуживание по регламенту автомобиля. Масло, фильтры и необходимые проверки.', action: 'Записаться', target: '#contacts', icon: '01' },
