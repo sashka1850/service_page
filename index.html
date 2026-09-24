@@ -34,18 +34,17 @@
     </section>
     <div class="brand-strip container" aria-label="Обслуживаемые марки"><span>Одна команда.<br>Три знакомых бренда.</span><strong>HYUNDAI</strong><strong>KIA</strong><strong>GENESIS</strong></div>
     <section id="services" class="section container">
-      <div class="section-heading"><div><p class="eyebrow">01 / Что мы делаем</p><h2>Сервис под вашу задачу</h2></div><p>Плановое обслуживание или неисправность —<br>начнём с того, что нужно вашему автомобилю.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">01 / Что мы делаем</p><h2>Сервис под вашу задачу</h2></div></div>
       <div class="services-grid" id="services-list"></div>
     </section>
     <section id="calculator" class="calculator-section">
       <div class="container calculator-layout">
-        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Выберите марку и модель, чтобы узнать предварительную стоимость ТО.</p><p class="fine-print">Стоимость перенесена из исходного наброска. Состав работ, расходные материалы и итоговую сумму необходимо уточнить перед записью.</p></div>
+        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Выберите марку и модель, чтобы узнать стоимость ТО.</p></div>
         <form id="calculator-form" class="calculator-card">
           <h3>Калькулятор ТО</h3>
           <div class="form-row"><label>Марка<select id="brand" required><option value="">Выберите марку</option></select></label><label>Модель<select id="model" required disabled><option value="">Сначала выберите марку</option></select></label></div>
-          <div class="price-result" aria-live="polite" aria-atomic="true"><span>Предварительная стоимость</span><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
-          <button class="button dark" type="submit">Обсудить обслуживание</button>
-          <p class="form-note">Расчёт не является записью. Следующий шаг — уточнение деталей с сервисом.</p>
+          <div class="price-result" aria-live="polite" aria-atomic="true"><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
+          <button class="button dark" type="submit">Записаться</button>
         </form>
       </div>
     </section>
