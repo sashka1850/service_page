@@ -265,11 +265,23 @@ h1 {
 .typewriter-text {
   min-height:calc(1em * 1.65);
   opacity:0;
-  transition:opacity 3150ms ease;
+  transition:opacity 180ms ease;
 }
 
 .typewriter-text.is-visible {
   opacity:1;
+}
+
+.word-reveal {
+  opacity:0;
+  animation:word-reveal 300ms ease forwards;
+  animation-delay:var(--word-delay,0ms);
+}
+
+@keyframes word-reveal {
+  to {
+    opacity:1;
+  }
 }
 
 .primary {
