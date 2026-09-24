@@ -10,11 +10,7 @@ const config = {
   house: '', // В исходнике расходятся 52б и 52д — требуется подтверждение.
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/service_zone.mp4', // Локальный путь, например ./assets/hero.mp4.
-};
-const prices = {
-  Hyundai: { Solaris: 12000, Tucson: 13000, 'Santa Fe': 18000 },
-  Kia: { Rio: 11500, K5: 13500, Sorento: 17500 },
-  Genesis: { G70: 17000, G80: 25000, G90: 35000 },
+  maintenanceApiUrl: '', // URL опубликованного веб-приложения Apps Script (.../exec).
 };
 const services = [
   { title: 'Техническое обслуживание', text: 'Плановое обслуживание по регламенту автомобиля. Масло, фильтры и необходимые проверки.', action: 'Записаться', target: '#contacts', icon: '01' },
@@ -32,9 +28,6 @@ const team = [
   { name: 'Владислав Матросов', role: 'Директор сервиса', image: 'vladislav.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Организация работы команды и клиентский сервис.' },
   { name: 'Вадим Смирнов', role: 'Старший сервисный консультант', image: 'vadim.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Обсуждение задач и сопровождение обслуживания.' },
 ];
-function getPrice(brand, model) {
-  return Object.hasOwn(prices, brand) && Object.hasOwn(prices[brand], model) ? prices[brand][model] : null;
-}
 
 // Альбомы пространства сервиса. Добавляйте любое количество { src, alt }.
 // Новые снимки клиентской и ремонтной зон пока не предоставлены.
@@ -49,28 +42,113 @@ const spaceAlbums = [
 ];
 
 const $ = (selector) => document.querySelector(selector);
-const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(value);
+const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 $('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden><p>${escape(s.text)}</p><button class="service-action button light-button" type="button">${escape(s.action)}</button></div></article>`).join('');
 $('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="button light-button" type="button">Записаться по акции</button></article>`).join('');
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
-const brand = $('#brand'), model = $('#model');
-Object.keys(prices).forEach(name => brand.add(new Option(name, name)));
-function updatePrice() {
-  const value = getPrice(brand.value, model.value);
-  $('#price').textContent = value === null ? '—' : money(value);
-  $('#price-note').textContent = value === null ? 'Выберите ваш автомобиль' : `${brand.value} ${model.value} · предварительный расчёт`;
+const brand = $('#brand'), model = $('#model'), variant = $('#variant'), maintenance = $('#maintenance-type');
+const bookButton = $('#calculator-form button[type="submit"]');
+let catalog = [], selectedQuote = null, quoteRequest = 0;
+// Apps Script ContentService redirects JSON to a different origin. Its documented
+// JSONP response lets a static site read public, read-only catalogue data.
+function apiRequest(params) {
+  return new Promise((resolve, reject) => {
+    const callback = `__gtsToCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const url = new URL(config.maintenanceApiUrl);
+    Object.entries({ ...params, callback }).forEach(([key, value]) => url.searchParams.set(key, value));
+    const script = document.createElement('script');
+    let settled = false;
+    const finish = (error, result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      script.remove();
+      delete window[callback];
+      if (error) reject(error); else resolve(result);
+    };
+    window[callback] = result => finish(null, result);
+    script.onerror = () => finish(new Error('Сервис цен недоступен'));
+    const timer = setTimeout(() => finish(new Error('Превышено время ожидания')), 12000);
+    script.src = url.toString();
+    document.head.append(script);
+  });
+}
+function setOptions(select, placeholder, entries) {
+  select.replaceChildren(new Option(placeholder, ''));
+  entries.forEach(({ label, value }) => select.add(new Option(label, value)));
+  select.disabled = !entries.length;
+}
+function resetQuote(message = 'Выберите автомобиль и вид ТО') {
+  quoteRequest++;
+  selectedQuote = null;
+  $('#price').textContent = '—';
+  $('#price-note').textContent = message;
+  bookButton.disabled = true;
+}
+async function loadCatalog() {
+  if (!config.maintenanceApiUrl) {
+    setOptions(brand, 'Калькулятор скоро заработает', []);
+    resetQuote('Для расчёта необходимо подключить таблицу цен.');
+    return;
+  }
+  try {
+    const result = await apiRequest({ action: 'catalog' });
+    if (!result.ok || !Array.isArray(result.models)) throw new Error('Не удалось загрузить каталог');
+    catalog = result.models;
+    setOptions(brand, 'Выберите марку', [...new Set(catalog.map(item => item.brand))].sort().map(value => ({ label: value, value })));
+    if (!catalog.length) resetQuote('Нет доступных автомобилей. Проверьте данные таблицы.');
+  } catch (error) {
+    setOptions(brand, 'Не удалось загрузить марки', []);
+    resetQuote('Не удалось загрузить цены. Попробуйте обновить страницу.');
+  }
 }
 brand.addEventListener('change', () => {
-  model.replaceChildren(new Option(brand.value ? 'Выберите модель' : 'Сначала выберите марку', ''));
-  model.disabled = !brand.value;
-  if (brand.value) Object.keys(prices[brand.value]).forEach(name => model.add(new Option(name, name)));
-  updatePrice();
+  setOptions(model, brand.value ? 'Выберите модель' : 'Сначала выберите марку', brand.value
+    ? [...new Set(catalog.filter(item => item.brand === brand.value).map(item => item.model))].sort().map(value => ({ label: value, value })) : []);
+  setOptions(variant, 'Сначала выберите модель', []);
+  setOptions(maintenance, 'Сначала выберите вариант', []);
+  resetQuote();
 });
-model.addEventListener('change', updatePrice);
+model.addEventListener('change', () => {
+  setOptions(variant, model.value ? 'Выберите вариант' : 'Сначала выберите модель', catalog
+    .filter(item => item.brand === brand.value && item.model === model.value)
+    .map(item => ({ label: item.variant, value: item.modelId })));
+  setOptions(maintenance, 'Сначала выберите вариант', []);
+  resetQuote();
+});
+variant.addEventListener('change', () => {
+  const current = catalog.find(item => item.modelId === variant.value);
+  setOptions(maintenance, current ? 'Выберите вид ТО' : 'Сначала выберите вариант',
+    (current?.types || []).map(value => ({ label: value, value })));
+  resetQuote();
+});
+maintenance.addEventListener('change', async () => {
+  resetQuote();
+  if (!variant.value || !maintenance.value) return;
+  const request = quoteRequest;
+  const modelId = variant.value, type = maintenance.value;
+  $('#price-note').textContent = 'Рассчитываем стоимость…';
+  try {
+    const result = await apiRequest({ action: 'quote', modelId, type });
+    if (request !== quoteRequest) return;
+    if (!result.ok || !result.priceId || !Number.isFinite(result.price)) throw new Error('Стоимость не найдена');
+    selectedQuote = result;
+    $('#price').textContent = money(result.price);
+    $('#price-note').textContent = `${type} · предварительная стоимость`;
+    bookButton.disabled = false;
+  } catch (error) {
+    if (request === quoteRequest) $('#price-note').textContent = 'Не удалось получить цену. Выберите вид ТО ещё раз.';
+  }
+});
 $('#calculator-form').addEventListener('submit', event => {
   event.preventDefault();
+  if (!selectedQuote || selectedQuote.modelId !== variant.value || selectedQuote.type !== maintenance.value) return;
+  const summary = `${brand.value} ${model.value} · ${variant.selectedOptions[0].textContent} · ${maintenance.value} · ${money(selectedQuote.price)} (№ ${selectedQuote.priceId})`;
+  $('#selected-service').textContent = `Вы выбрали: ${summary}`;
+  $('#contacts').scrollIntoView({ behavior: 'smooth' });
 });
+loadCatalog();
 const serviceCards = [...document.querySelectorAll('.service-card')];
 function closeServiceCard(card) {
   const button = card.querySelector('.service-toggle');

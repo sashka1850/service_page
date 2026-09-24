@@ -39,12 +39,13 @@
     </section>
     <section id="calculator" class="calculator-section">
       <div class="container calculator-layout">
-        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Выберите марку и модель, чтобы узнать стоимость ТО.</p></div>
+        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Выберите автомобиль и вид ТО, чтобы узнать стоимость обслуживания.</p></div>
         <form id="calculator-form" class="calculator-card">
           <h3>Калькулятор ТО</h3>
-          <div class="form-row"><label>Марка<select id="brand" required><option value="">Выберите марку</option></select></label><label>Модель<select id="model" required disabled><option value="">Сначала выберите марку</option></select></label></div>
+          <div class="form-row"><label>Марка<select id="brand" required disabled><option value="">Загрузка марок…</option></select></label><label>Модель<select id="model" required disabled><option value="">Сначала выберите марку</option></select></label></div>
+          <div class="form-row calculator-extra"><label>Вариант автомобиля<select id="variant" required disabled><option value="">Сначала выберите модель</option></select></label><label>Вид ТО<select id="maintenance-type" required disabled><option value="">Сначала выберите вариант</option></select></label></div>
           <div class="price-result" aria-live="polite" aria-atomic="true"><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
-          <button class="button dark" type="submit">Записаться</button>
+          <button class="button dark" type="submit" disabled>Записаться</button>
         </form>
       </div>
     </section>

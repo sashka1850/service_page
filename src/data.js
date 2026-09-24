@@ -7,11 +7,7 @@ export const config = {
   house: '', // В исходнике расходятся 52б и 52д — требуется подтверждение.
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/service_zone.mp4', // Локальный путь, например ./assets/hero.mp4.
-};
-export const prices = {
-  Hyundai: { Solaris: 12000, Tucson: 13000, 'Santa Fe': 18000 },
-  Kia: { Rio: 11500, K5: 13500, Sorento: 17500 },
-  Genesis: { G70: 17000, G80: 25000, G90: 35000 },
+  maintenanceApiUrl: '', // URL опубликованного веб-приложения Apps Script (.../exec).
 };
 export const services = [
   { title: 'Техническое обслуживание', text: 'Плановое обслуживание по регламенту автомобиля. Масло, фильтры и необходимые проверки.', action: 'Записаться', target: '#contacts', icon: '01' },
@@ -29,9 +25,6 @@ export const team = [
   { name: 'Владислав Матросов', role: 'Директор сервиса', image: 'vladislav.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Организация работы команды и клиентский сервис.' },
   { name: 'Вадим Смирнов', role: 'Старший сервисный консультант', image: 'vadim.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Обсуждение задач и сопровождение обслуживания.' },
 ];
-export function getPrice(brand, model) {
-  return Object.hasOwn(prices, brand) && Object.hasOwn(prices[brand], model) ? prices[brand][model] : null;
-}
 
 // Альбомы пространства сервиса. Добавляйте любое количество { src, alt }.
 // Новые снимки клиентской и ремонтной зон пока не предоставлены.
