@@ -128,19 +128,19 @@ if (config.heroVideo && !matchMedia('(prefers-reduced-motion: reduce)').matches)
 }
 
 
-function revealWords(element) {
+function revealLetters(element) {
   const text = element.dataset.typeText || element.textContent.trim();
   if (!text || element.dataset.typed === 'true') return;
   element.dataset.typed = 'true';
   element.dataset.typeText = text;
-  let wordIndex = 0;
-  element.replaceChildren(...text.split(/(\s+)/).map((part) => {
+  let letterIndex = 0;
+  element.replaceChildren(...[...text].map((char) => {
+    if (/\s/.test(char)) return document.createTextNode(char);
     const span = document.createElement('span');
-    span.textContent = part;
-    if (!part.trim()) return document.createTextNode(part);
-    span.className = 'word-reveal';
-    span.style.setProperty('--word-delay', `${wordIndex * 210}ms`);
-    wordIndex += 1;
+    span.textContent = char;
+    span.className = 'letter-reveal';
+    span.style.setProperty('--letter-delay', `${letterIndex * 18}ms`);
+    letterIndex += 1;
     return span;
   }));
   element.classList.add('is-typed');
@@ -186,7 +186,7 @@ function setupRevealAnimations() {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
       entry.target.classList.add('is-visible');
-      if (entry.target.classList.contains('typewriter-text')) revealWords(entry.target);
+      if (entry.target.classList.contains('typewriter-text')) revealLetters(entry.target);
       observer.unobserve(entry.target);
     });
   }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
