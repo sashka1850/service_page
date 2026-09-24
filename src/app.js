@@ -21,7 +21,7 @@ brand.addEventListener('change', () => {
 model.addEventListener('change', updatePrice);
 $('#calculator-form').addEventListener('submit', event => {
   event.preventDefault();
-}));
+});
 const serviceCards = [...document.querySelectorAll('.service-card')];
 function closeServiceCard(card) {
   const button = card.querySelector('.service-toggle');
