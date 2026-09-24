@@ -1,0 +1,123 @@
+.space-card,
+.team-card {
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:500px;
+  background:#c9c9c9;
+  border-radius:22px;
+}
+
+.space-card > .space-gallery,
+.team-card > .team-gallery,
+.space-card > img,
+.team-card > img {
+  height:300px;
+  width:100%;
+  border-radius:0;
+  background:#c9c9c9;
+}
+
+.space-card > div:not(.space-gallery),
+.team-card > p,
+.team-card > h3,
+.team-card > p:last-child {
+  background:#c9c9c9;
+}
+
+.space-card > div:not(.space-gallery) {
+  flex:1;
+  padding:28px;
+}
+
+.space-card > div:not(.space-gallery) > span,
+.team-card::before {
+  position:absolute;
+  left:18px;
+  top:18px;
+  z-index:5;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:40px;
+  height:28px;
+  padding:0 14px;
+  border-radius:999px;
+  background:#f5f6f4;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.06em;
+}
+
+.space-card > div:not(.space-gallery) > span {
+  right:auto;
+}
+
+.team-grid {
+  counter-reset:team-card;
+}
+
+.team-card {
+  counter-increment:team-card;
+}
+
+.team-card::before {
+  content:'0' counter(team-card);
+}
+
+.space-card h3,
+.team-card h3 {
+  padding-right:0;
+  font-size:21px;
+}
+
+.team-card > h3,
+.team-card > p {
+  padding-inline:28px;
+}
+
+.team-role {
+  margin:28px 0 10px!important;
+  color:var(--muted)!important;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.team-card > p:last-child {
+  flex:1;
+  margin-top:12px;
+  padding-bottom:28px;
+}
+
+@media(max-width:800px) {
+  .space-card,
+  .team-card {
+    min-height:420px;
+  }
+
+  .space-card > .space-gallery,
+  .team-card > .team-gallery,
+  .space-card > img,
+  .team-card > img {
+    height:230px;
+  }
+
+  .space-card > div:not(.space-gallery) {
+    padding:24px;
+  }
+
+  .team-card > h3,
+  .team-card > p {
+    padding-inline:24px;
+  }
+
+  .team-role {
+    margin-top:24px!important;
+  }
+
+  .team-card > p:last-child {
+    padding-bottom:24px;
+  }
+}
