@@ -910,8 +910,8 @@ select:disabled {
     overscroll-behavior:contain;
     scroll-snap-type:x mandatory;
     -webkit-overflow-scrolling:touch;
-    padding:0 28px 2px;
-    margin-inline:-28px;
+    padding:0 0 2px;
+    margin-inline:0;
   }
   .mobile-card-scroll::-webkit-scrollbar {
     width:0;
@@ -922,11 +922,12 @@ select:disabled {
   .mobile-card-scroll > .team-card {
     scroll-snap-align:start;
     scroll-snap-stop:always;
-    flex:0 0 min(360px,82vw);
+    flex:0 0 100%;
+    max-width:100%;
   }
   .mobile-scroll-progress {
     display:block;
-    width:calc(100% - 56px);
+    width:100%;
     max-width:1280px;
     height:2px;
     margin:18px auto 0;
