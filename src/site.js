@@ -51,7 +51,7 @@ const spaceAlbums = [
 const $ = (selector) => document.querySelector(selector);
 const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-$('#services-list').innerHTML = services.map(s => `<article class="service-card"><span class="card-number">${s.icon} /</span><h3>${escape(s.title)}</h3><p>${escape(s.text)}</p><a href="${s.target}" ${s.target === '#contacts' ? `data-service="${escape(s.title)}"` : ''}>${escape(s.action)}</a></article>`).join('');
+$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden><p>${escape(s.text)}</p><a href="${s.target}" ${s.target === '#contacts' ? `data-service="${escape(s.title)}"` : ''}>${escape(s.action)}</a></div></article>`).join('');
 $('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><a class="button light-button" href="#contacts" data-service="${escape(s.title)}">Записаться по акции</a></article>`).join('');
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model');
@@ -78,6 +78,30 @@ $('#calculator-form').addEventListener('submit', event => {
 document.querySelectorAll('[data-service]').forEach(link => link.addEventListener('click', () => {
   $('#selected-service').textContent = `Вас интересует: ${link.dataset.service}. Запись ещё не оформлена.`;
 }));
+const serviceCards = [...document.querySelectorAll('.service-card')];
+function closeServiceCard(card) {
+  const button = card.querySelector('.service-toggle');
+  const details = card.querySelector('.service-details');
+  if (!button || !details) return;
+  card.classList.remove('is-open');
+  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-label', `Открыть описание: ${card.querySelector('h3')?.textContent || 'услуга'}`);
+  details.hidden = true;
+}
+serviceCards.forEach((card) => {
+  const button = card.querySelector('.service-toggle');
+  const details = card.querySelector('.service-details');
+  if (!button || !details) return;
+  button.addEventListener('click', () => {
+    const willOpen = button.getAttribute('aria-expanded') !== 'true';
+    serviceCards.forEach(item => closeServiceCard(item));
+    if (!willOpen) return;
+    card.classList.add('is-open');
+    button.setAttribute('aria-expanded', 'true');
+    button.setAttribute('aria-label', `Закрыть описание: ${card.querySelector('h3')?.textContent || 'услуга'}`);
+    details.hidden = false;
+  });
+});
 const menuButton = $('.menu-toggle'), navigation = $('#navigation');
 function closeMenu() {
   menuButton.setAttribute('aria-expanded', 'false');
