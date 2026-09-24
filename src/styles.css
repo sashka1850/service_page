@@ -501,6 +501,8 @@ h1 {
   gap:16px;
 }
 
+.calculator-extra { margin-top:16px; }
+
 label {
   font-size:12px;
   display:flex;
