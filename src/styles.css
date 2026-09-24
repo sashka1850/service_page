@@ -272,13 +272,13 @@ h1 {
   opacity:1;
 }
 
-.word-reveal {
+.letter-reveal {
   opacity:0;
-  animation:word-reveal 300ms ease forwards;
-  animation-delay:var(--word-delay,0ms);
+  animation:letter-reveal 360ms ease forwards;
+  animation-delay:var(--letter-delay,0ms);
 }
 
-@keyframes word-reveal {
+@keyframes letter-reveal {
   to {
     opacity:1;
   }
