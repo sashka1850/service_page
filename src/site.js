@@ -128,21 +128,22 @@ if (config.heroVideo && !matchMedia('(prefers-reduced-motion: reduce)').matches)
 }
 
 
-function typeText(element) {
+function revealWords(element) {
   const text = element.dataset.typeText || element.textContent.trim();
   if (!text || element.dataset.typed === 'true') return;
   element.dataset.typed = 'true';
   element.dataset.typeText = text;
-  element.textContent = '';
-  let index = 0;
-  const interval = window.setInterval(() => {
-    element.textContent = text.slice(0, index + 1);
-    index += 1;
-    if (index >= text.length) {
-      window.clearInterval(interval);
-      element.classList.add('is-typed');
-    }
-  }, 30);
+  let wordIndex = 0;
+  element.replaceChildren(...text.split(/(\s+)/).map((part) => {
+    const span = document.createElement('span');
+    span.textContent = part;
+    if (!part.trim()) return document.createTextNode(part);
+    span.className = 'word-reveal';
+    span.style.setProperty('--word-delay', `${wordIndex * 210}ms`);
+    wordIndex += 1;
+    return span;
+  }));
+  element.classList.add('is-typed');
 }
 
 function setupRevealAnimations() {
@@ -185,7 +186,7 @@ function setupRevealAnimations() {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
       entry.target.classList.add('is-visible');
-      if (entry.target.classList.contains('typewriter-text')) typeText(entry.target);
+      if (entry.target.classList.contains('typewriter-text')) revealWords(entry.target);
       observer.unobserve(entry.target);
     });
   }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
