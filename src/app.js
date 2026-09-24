@@ -139,7 +139,7 @@ function setupMobileSectionSwipe() {
     .filter(Boolean);
   let touchStart = null;
   let snapLocked = false;
-  const ignoredSelector = 'select, input, textarea, button, a, dialog, .photo-viewer, .space-gallery, .mobile-card-scroll';
+  const ignoredSelector = 'select, input, textarea, button, a, dialog, .photo-viewer, .space-gallery';
 
   function nearestSectionIndex() {
     const viewportMiddle = window.innerHeight / 2;
@@ -154,14 +154,6 @@ function setupMobileSectionSwipe() {
       }
     });
     return bestIndex;
-  }
-
-  function cardScrollerCanMove(target, direction) {
-    const scroller = target.closest?.('.mobile-card-scroll');
-    if (!scroller || scroller.scrollHeight <= scroller.clientHeight + 2) return false;
-    return direction > 0
-      ? scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 2
-      : scroller.scrollTop > 2;
   }
 
   document.addEventListener('touchstart', (event) => {
@@ -184,7 +176,7 @@ function setupMobileSectionSwipe() {
     const direction = dy < 0 ? 1 : -1;
     const isFastVerticalSwipe = distance > 72 && velocity > 0.55 && Math.abs(dy) > Math.abs(dx) * 1.35;
 
-    if (!isFastVerticalSwipe || cardScrollerCanMove(touchStart.target, direction)) {
+    if (!isFastVerticalSwipe) {
       touchStart = null;
       return;
     }
@@ -215,8 +207,8 @@ function setupMobileCardProgress() {
     section.append(progress);
     const bar = progress.querySelector('span');
     const update = () => {
-      const max = Math.max(scroller.scrollHeight - scroller.clientHeight, 1);
-      const value = Math.min(scroller.scrollTop / max, 1);
+      const max = Math.max(scroller.scrollWidth - scroller.clientWidth, 1);
+      const value = Math.min(scroller.scrollLeft / max, 1);
       bar.style.transform = `scaleX(${Number.isFinite(value) ? value : 0})`;
     };
     scroller.addEventListener('scroll', update, { passive: true });
