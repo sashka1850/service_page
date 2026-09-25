@@ -18,11 +18,6 @@ const services = [
   { title: 'Диагностика', text: 'Проверка двигателя, ходовой части и других систем. Поиск причины неисправности.', action: 'Записаться', target: '#contacts', icon: '03' },
   { title: 'Детейлинг и доработки', text: 'Полировка, химчистка, защитная плёнка и другие работы по уходу за автомобилем.', action: 'Записаться', target: '#contacts', icon: '04' },
 ];
-const offers = [
-  { title: 'Диагностика двигателя', price: 2999, items: ['Компьютерная диагностика', 'Замер компрессии и эндоскопия', 'Проверка навесного оборудования', 'Осмотр на предмет течей'] },
-  { title: 'Диагностика ходовой', price: 999, items: ['Проверка амортизаторов', 'Осмотр тормозной системы', 'Проверка люфтов', 'Осмотр резинотехнических деталей'] },
-  { title: 'Диагностика кондиционера', price: 3999, items: ['Проверка эффективности охлаждения', 'Проверка уровня хладагента', 'Осмотр испарителя и конденсора'] },
-];
 const team = [
   { name: 'Тимофей Дмитриев', role: 'Руководитель ремонтного цеха', image: 'timofey.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Диагностика, технические вопросы и организация ремонта.' },
   { name: 'Владислав Матросов', role: 'Директор сервиса', image: 'vladislav.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Организация работы команды и клиентский сервис.' },
@@ -45,11 +40,11 @@ const $ = (selector) => document.querySelector(selector);
 const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 $('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden><p>${escape(s.text)}</p><button class="service-action button light-button" type="button">${escape(s.action)}</button></div></article>`).join('');
-$('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="button light-button" type="button">Записаться по акции</button></article>`).join('');
+$('#offers-list').innerHTML = '<p role="status">Загружаем актуальные акции…</p>';
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model'), variant = $('#variant'), maintenance = $('#maintenance-type');
 const bookButton = $('#calculator-form button[type="submit"]');
-let catalog = [], selectedQuote = null, quoteRequest = 0;
+let catalog = [], selectedQuote = null, quoteRequest = 0, activeOffers = [], selectedBooking = null;
 // Apps Script ContentService redirects JSON to a different origin. Its documented
 // JSONP response lets a static site read public, read-only catalogue data.
 function apiRequest(params) {
@@ -144,10 +139,35 @@ maintenance.addEventListener('change', async () => {
 $('#calculator-form').addEventListener('submit', event => {
   event.preventDefault();
   if (!selectedQuote || selectedQuote.modelId !== variant.value || selectedQuote.type !== maintenance.value) return;
-  $('#booking-service').textContent = `${brand.value} ${model.value} · ${variant.selectedOptions[0].textContent} · ${maintenance.value} · ${money(selectedQuote.price)}`;
+  openBooking({ kind: 'maintenance', modelId: selectedQuote.modelId, type: selectedQuote.type, priceId: selectedQuote.priceId },
+    `${brand.value} ${model.value} · ${variant.selectedOptions[0].textContent} · ${maintenance.value} · ${money(selectedQuote.price)}`);
+});
+function openBooking(selection, summary) {
+  selectedBooking = selection;
+  $('#booking-service').textContent = summary;
   $('#booking-status').textContent = '';
   $('#booking-dialog').showModal();
   $('#booking-name').focus();
+}
+async function loadOffers() {
+  try {
+    const result = await apiRequest({ action: 'offers' });
+    if (!result.ok || !Array.isArray(result.offers)) throw new Error('Не удалось загрузить акции');
+    activeOffers = result.offers;
+    $('#offers-list').innerHTML = activeOffers.length ? activeOffers.map((offer, index) =>
+      `<article class="offer-card"><span class="card-number">${String(index + 1).padStart(2, '0')} /</span><h3>${escape(offer.title)}</h3><strong>${money(offer.price)}</strong><ul>${offer.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="button light-button" type="button" data-offer-id="${escape(offer.offerId)}">Записаться по акции</button></article>`
+    ).join('') : '<p role="status">Сейчас нет действующих акций.</p>';
+  } catch (error) {
+    $('#offers-list').innerHTML = '<p role="status">Не удалось загрузить акции. Обновите страницу позже.</p>';
+  }
+}
+$('#offers-list').addEventListener('click', event => {
+  const button = event.target.closest('[data-offer-id]');
+  if (!button) return;
+  const offer = activeOffers.find(item => item.offerId === button.dataset.offerId);
+  if (!offer) return;
+  openBooking({ kind: 'offer', offerId: offer.offerId, expectedPrice: offer.price },
+    `${offer.title} · ${money(offer.price)}`);
 });
 const bookingDialog = $('#booking-dialog'), bookingForm = $('#booking-form');
 const bookingName = $('#booking-name'), bookingPhone = $('#booking-phone'), bookingConsent = $('#booking-consent');
@@ -173,7 +193,7 @@ function updateBookingValidity() {
 [bookingName, bookingPhone].forEach(input => input.addEventListener('input', updateBookingValidity));
 bookingConsent.addEventListener('change', updateBookingValidity);
 $('#booking-close').addEventListener('click', () => bookingDialog.close());
-bookingDialog.addEventListener('close', () => { bookingForm.reset(); bookingSent = false; updateBookingValidity(); });
+bookingDialog.addEventListener('close', () => { bookingForm.reset(); bookingSent = false; selectedBooking = null; updateBookingValidity(); });
 const callLink = $('#booking-call');
 if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
   callLink.href = `tel:${config.phone}`;
@@ -185,8 +205,8 @@ if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
 }
 bookingForm.addEventListener('submit', event => {
   event.preventDefault();
-  if (!updateBookingValidity() || bookingPending || bookingSent || !selectedQuote) return;
-  const quote = selectedQuote;
+  if (!updateBookingValidity() || bookingPending || bookingSent || !selectedBooking) return;
+  const booking = { ...selectedBooking };
   bookingPending = true;
   updateBookingValidity();
   $('#booking-status').textContent = 'Отправляем заявку…';
@@ -197,7 +217,15 @@ bookingForm.addEventListener('submit', event => {
   transport.target = 'booking-transport';
   transport.hidden = true;
   const fields = { action: 'lead', nonce, name: bookingName.value.trim(), phone: phoneDigits(bookingPhone.value),
-    consent: 'yes', modelId: quote.modelId, type: quote.type, priceId: quote.priceId, website: '' };
+    consent: 'yes', kind: booking.kind, website: '' };
+  if (booking.kind === 'offer') {
+    fields.offerId = booking.offerId;
+    fields.expectedPrice = booking.expectedPrice;
+  } else {
+    fields.modelId = booking.modelId;
+    fields.type = booking.type;
+    fields.priceId = booking.priceId;
+  }
   Object.entries(fields).forEach(([key, value]) => {
     const field = document.createElement('input');
     field.name = key; field.value = value; transport.append(field);
@@ -218,6 +246,12 @@ bookingForm.addEventListener('submit', event => {
   const receive = event => {
     if (!/^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(event.origin) && event.origin !== 'https://script.google.com') return;
     if (event.data?.source !== 'gts-booking' || event.data.nonce !== nonce) return;
+    if (event.data.code === 'PRICE_CHANGED' || event.data.code === 'OFFER_UNAVAILABLE') {
+      finish('Акция изменилась или больше недоступна. Обновите страницу и проверьте стоимость.', false);
+      bookingSent = true;
+      updateBookingValidity();
+      return;
+    }
     finish(event.data.ok ? 'Заявка отправлена. Мы свяжемся с вами.' : 'Не удалось отправить заявку. Попробуйте ещё раз.', !!event.data.ok);
   };
   window.addEventListener('message', receive);
@@ -225,6 +259,7 @@ bookingForm.addEventListener('submit', event => {
   transport.submit();
 });
 loadCatalog();
+loadOffers();
 const serviceCards = [...document.querySelectorAll('.service-card')];
 function closeServiceCard(card) {
   const button = card.querySelector('.service-toggle');

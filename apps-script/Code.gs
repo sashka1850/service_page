@@ -8,9 +8,10 @@ function doGet(e) {
   }
   var result;
   try {
-    var db = readDatabase_();
-    if (p.action === 'catalog') result = { ok: true, models: db.models };
+    if (p.action === 'offers') result = { ok: true, offers: readOffers_(false) };
+    else if (p.action === 'catalog') result = { ok: true, models: readDatabase_().models };
     else if (p.action === 'quote') {
+      var db = readDatabase_();
       var match = db.prices.filter(function(row) {
         return row.modelId === p.modelId && row.type === p.type;
       });
@@ -40,28 +41,41 @@ function doPost(e) {
     if (name.length < 2 || name.length > 80 || !/^[\p{L}][\p{L}\s.'-]*$/u.test(name)) throw new Error('Invalid name');
     var phone = normalizePhone_(p.phone);
     if (!phone) throw new Error('Invalid phone');
-    var db = readDatabase_();
-    var match = db.prices.filter(function(row) {
-      return row.modelId === p.modelId && row.type === p.type && row.priceId === p.priceId;
-    });
-    var car = db.models.filter(function(row) { return row.modelId === p.modelId; });
-    if (match.length !== 1 || car.length !== 1) throw new Error('Invalid quote');
+    var messageLines;
+    if (p.kind === 'offer') {
+      // For a lead, read the sheet again: disabling an offer must take effect
+      // immediately even if the public card list is still cached.
+      var offer = readOffers_(true).filter(function(row) { return row.offerId === p.offerId; });
+      if (offer.length !== 1) {
+        result.code = 'OFFER_UNAVAILABLE';
+        throw new Error('Inactive or unknown offer');
+      }
+      if (p.expectedPrice === undefined || p.expectedPrice === '' || !Number.isFinite(Number(p.expectedPrice)) || Number(p.expectedPrice) !== offer[0].price) {
+        result.code = 'PRICE_CHANGED';
+        throw new Error('Offer price changed');
+      }
+      messageLines = ['Новая заявка по акции', 'Имя: ' + name, 'Телефон: ' + phone,
+        'Акция: ' + offer[0].title, 'Стоимость: ' + offer[0].price + ' ₽',
+        'ID акции: ' + offer[0].offerId];
+    } else if (p.kind === 'maintenance' || !p.kind) {
+      var db = readDatabase_();
+      var match = db.prices.filter(function(row) {
+        return row.modelId === p.modelId && row.type === p.type && row.priceId === p.priceId;
+      });
+      var car = db.models.filter(function(row) { return row.modelId === p.modelId; });
+      if (match.length !== 1 || car.length !== 1) throw new Error('Invalid quote');
+      messageLines = ['Новая заявка на ТО', 'Имя: ' + name, 'Телефон: ' + phone,
+        'Автомобиль: ' + car[0].brand + ' ' + car[0].model + ' — ' + car[0].variant,
+        'Услуга: ' + match[0].type, 'Стоимость: ' + match[0].price + ' ₽',
+        'ID цены: ' + match[0].priceId];
+    } else throw new Error('Unknown lead kind');
     var credentials = PropertiesService.getScriptProperties();
     var token = credentials.getProperty('TELEGRAM_BOT_TOKEN');
     var chatId = credentials.getProperty('TELEGRAM_CHAT_ID');
     if (!token || !chatId) throw new Error('Telegram is not configured');
     var cache = CacheService.getScriptCache();
     if (cache.get('lead-' + result.nonce)) { result.ok = true; return leadResponse_(result); }
-    var message = [
-      'Новая заявка на ТО',
-      'Имя: ' + name,
-      'Телефон: ' + phone,
-      'Автомобиль: ' + car[0].brand + ' ' + car[0].model + ' — ' + car[0].variant,
-      'Услуга: ' + match[0].type,
-      'Стоимость: ' + match[0].price + ' ₽',
-      'ID цены: ' + match[0].priceId,
-      'Согласие на обработку данных: да'
-    ].join('\n');
+    var message = messageLines.concat('Согласие на обработку данных: да').join('\n');
     var response = UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
       method: 'post', contentType: 'application/json',
       payload: JSON.stringify({ chat_id: chatId, text: message }),
@@ -75,6 +89,49 @@ function doPost(e) {
     console.error('Lead delivery failed');
   }
   return leadResponse_(result);
+}
+
+function readOffers_(fresh) {
+  var cache = CacheService.getScriptCache();
+  var saved = !fresh && cache.get('gts-offers-v1');
+  if (saved) return JSON.parse(saved);
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var offersSheet = spreadsheet.getSheetByName('Акции');
+  var itemsSheet = spreadsheet.getSheetByName('Состав_акций');
+  if (!offersSheet || !itemsSheet) throw new Error('Missing promotion sheets');
+  var offerRows = offersSheet.getDataRange().getValues();
+  var itemRows = itemsSheet.getDataRange().getValues();
+  var o = columns_(offerRows.shift(), ['offer_id','название','цена_руб','активна','порядок']);
+  var i = columns_(itemRows.shift(), ['offer_id','порядок','пункт']);
+  var counts = Object.create(null), byId = Object.create(null);
+  offerRows.forEach(function(row) {
+    var id = String(row[o.offer_id] || '').trim();
+    if (id) counts[id] = (counts[id] || 0) + 1;
+  });
+  offerRows.forEach(function(row) {
+    var id = String(row[o.offer_id] || '').trim();
+    var title = String(row[o['название']] || '').trim();
+    var raw = row[o['цена_руб']];
+    var price = typeof raw === 'number' ? raw : Number(String(raw).replace(/[\s\u00a0\u202f]/g, '').replace(',', '.'));
+    // An unchecked checkbox is boolean false. Text "TRUE" is not an active marker.
+    if (!id || counts[id] !== 1 || row[o['активна']] !== true || !title || raw === '' || raw === null || !Number.isFinite(price) || price < 0) return;
+    byId[id] = { offerId: id, title: title, price: price,
+      order: Number(row[o['порядок']]) || 9999, items: [] };
+  });
+  itemRows.forEach(function(row) {
+    var item = byId[String(row[i.offer_id] || '').trim()];
+    var text = String(row[i['пункт']] || '').trim();
+    if (item && text) item.items.push({ order: Number(row[i['порядок']]) || 9999, text: text });
+  });
+  var offers = Object.keys(byId).map(function(id) { return byId[id]; });
+  offers.forEach(function(offer) {
+    offer.items.sort(function(a,b) { return a.order - b.order; });
+    offer.items = offer.items.map(function(item) { return item.text; });
+  });
+  offers.sort(function(a,b) { return a.order - b.order || a.offerId.localeCompare(b.offerId); });
+  offers.forEach(function(offer) { delete offer.order; });
+  if (!fresh) cache.put('gts-offers-v1', JSON.stringify(offers), 60);
+  return offers;
 }
 
 function normalizePhone_(value) {
