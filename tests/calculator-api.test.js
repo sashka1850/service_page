@@ -143,3 +143,12 @@ test('Telegram configuration and delivery errors return diagnostic codes without
   telegram.status = 400;
   assert.equal(lead('booking_123456789012_test').code, 'TELEGRAM_BAD_CHAT');
 });
+
+test('version endpoint and rejected lead always expose a safe diagnostic code', () => {
+  const { context } = makeApi();
+  const version = JSON.parse(context.doGet({ parameter: { action: 'version' } }).text);
+  assert.equal(version.version, '2026-09-25.2');
+  const html = context.doPost({ parameter: { action: 'lead', nonce: 'booking_123456789020_test' } }).html;
+  assert.match(html, /"code":"INVALID_FORM"/);
+  assert.match(html, /"version":"2026-09-25.2"/);
+});

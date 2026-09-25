@@ -1,4 +1,5 @@
 /** Web app bound to the price spreadsheet (Extensions → Apps Script). */
+var GTS_API_VERSION = '2026-09-25.2';
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
@@ -8,7 +9,8 @@ function doGet(e) {
   }
   var result;
   try {
-    if (p.action === 'offers') result = { ok: true, offers: readOffers_(false) };
+    if (p.action === 'version') result = { ok: true, version: GTS_API_VERSION };
+    else if (p.action === 'offers') result = { ok: true, offers: readOffers_(false) };
     else if (p.action === 'catalog') result = { ok: true, models: readDatabase_().models };
     else if (p.action === 'quote') {
       var db = readDatabase_();
@@ -40,17 +42,22 @@ function doGet(e) {
 function doPost(e) {
   var p = (e && e.parameter) || {};
   var nonce = String(p.nonce || '');
-  var result = { source: 'gts-booking', nonce: /^[a-zA-Z0-9_]{12,100}$/.test(nonce) ? nonce : '', ok: false };
+  var result = { source: 'gts-booking', version: GTS_API_VERSION,
+    nonce: /^[a-zA-Z0-9_]{12,100}$/.test(nonce) ? nonce : '', ok: false };
   try {
+    result.code = 'INVALID_FORM';
     if (p.action !== 'lead' || !result.nonce || p.website || p.consent !== 'yes') throw new Error('Invalid form');
     var name = String(p.name || '').trim().replace(/\s+/g, ' ');
+    result.code = 'INVALID_NAME';
     if (name.length < 2 || name.length > 80 || !/^[\p{L}][\p{L}\s.'-]*$/u.test(name)) throw new Error('Invalid name');
     var phone = normalizePhone_(p.phone);
+    result.code = 'INVALID_PHONE';
     if (!phone) throw new Error('Invalid phone');
     var messageLines;
     if (p.kind === 'offer') {
       // For a lead, read the sheet again: disabling an offer must take effect
       // immediately even if the public card list is still cached.
+      result.code = 'OFFER_READ_FAILED';
       var offer = readOffers_(true).filter(function(row) { return row.offerId === p.offerId; });
       if (offer.length !== 1) {
         result.code = 'OFFER_UNAVAILABLE';
@@ -64,17 +71,25 @@ function doPost(e) {
         'Акция: ' + offer[0].title, 'Стоимость: ' + offer[0].price + ' ₽',
         'ID акции: ' + offer[0].offerId];
     } else if (p.kind === 'maintenance' || !p.kind) {
+      result.code = 'MAINTENANCE_READ_FAILED';
       var db = readDatabase_();
       var match = db.prices.filter(function(row) {
         return row.modelId === p.modelId && row.type === p.type && row.priceId === p.priceId;
       });
       var car = db.models.filter(function(row) { return row.modelId === p.modelId; });
-      if (match.length !== 1 || car.length !== 1) throw new Error('Invalid quote');
+      if (match.length !== 1 || car.length !== 1) {
+        result.code = 'INVALID_QUOTE';
+        throw new Error('Invalid quote');
+      }
       messageLines = ['Новая заявка на ТО', 'Имя: ' + name, 'Телефон: ' + phone,
         'Автомобиль: ' + car[0].brand + ' ' + car[0].model + ' — ' + car[0].variant,
         'Услуга: ' + match[0].type, 'Стоимость: ' + match[0].price + ' ₽',
         'ID цены: ' + match[0].priceId];
-    } else throw new Error('Unknown lead kind');
+    } else {
+      result.code = 'INVALID_KIND';
+      throw new Error('Unknown lead kind');
+    }
+    result.code = 'PROPERTIES_UNAVAILABLE';
     var credentials = PropertiesService.getScriptProperties();
     var token = String(credentials.getProperty('TELEGRAM_BOT_TOKEN') || '').trim();
     var chatId = String(credentials.getProperty('TELEGRAM_CHAT_ID') || '').trim();
@@ -82,8 +97,13 @@ function doPost(e) {
       result.code = 'TELEGRAM_NOT_CONFIGURED';
       throw new Error('Telegram is not configured');
     }
+    result.code = 'CACHE_UNAVAILABLE';
     var cache = CacheService.getScriptCache();
-    if (cache.get('lead-' + result.nonce)) { result.ok = true; return leadResponse_(result); }
+    if (cache.get('lead-' + result.nonce)) {
+      result.ok = true;
+      delete result.code;
+      return leadResponse_(result);
+    }
     var message = messageLines.concat('Согласие на обработку данных: да').join('\n');
     result.code = 'TELEGRAM_REQUEST_FAILED';
     var response = UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
@@ -108,7 +128,8 @@ function doPost(e) {
     catch (cacheError) { console.error('Lead deduplication cache unavailable'); }
   } catch (error) {
     // Do not log names, phone numbers or the Telegram token.
-    console.error('Lead delivery failed: ' + (result.code || 'UNEXPECTED'));
+    result.code = result.code || 'INTERNAL_ERROR';
+    console.error('Lead delivery failed: ' + result.code);
   }
   return leadResponse_(result);
 }
