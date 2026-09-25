@@ -22,7 +22,13 @@ function doGet(e) {
     } else result = { ok: false, error: 'Неизвестное действие' };
   } catch (error) {
     console.error(error);
-    result = { ok: false, error: 'Не удалось прочитать базу цен' };
+    // Report only expected sheet setup errors; do not expose server details.
+    var setupError = String(error && error.message || '');
+    result = { ok: false, error: p.action === 'offers' &&
+      /^(Missing promotion sheet: |Missing column: )/.test(setupError)
+        ? setupError.replace('Missing promotion sheet: ', 'Не найден лист: ')
+          .replace('Missing column: ', 'Не найден столбец: ')
+        : 'Не удалось прочитать базу цен' };
   }
   return ContentService.createTextOutput(callback
     ? callback + '(' + JSON.stringify(result) + ');'
@@ -98,7 +104,8 @@ function readOffers_(fresh) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var offersSheet = spreadsheet.getSheetByName('Акции');
   var itemsSheet = spreadsheet.getSheetByName('Состав_акций');
-  if (!offersSheet || !itemsSheet) throw new Error('Missing promotion sheets');
+  if (!offersSheet) throw new Error('Missing promotion sheet: Акции');
+  if (!itemsSheet) throw new Error('Missing promotion sheet: Состав_акций');
   var offerRows = offersSheet.getDataRange().getValues();
   var itemRows = itemsSheet.getDataRange().getValues();
   var o = columns_(offerRows.shift(), ['offer_id','название','цена_руб','активна','порядок']);

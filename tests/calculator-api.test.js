@@ -100,6 +100,16 @@ test('promotions list only active rows, ordered with their current prices and co
   assert.equal(offers().length, 2); // Public list is cached briefly.
 });
 
+test('missing promotion sheet or header is named in the API response', () => {
+  const { context, tables } = makeApi();
+  const get = () => JSON.parse(context.doGet({ parameter: { action: 'offers' } }).text);
+  delete tables.Состав_акций;
+  assert.equal(get().error, 'Не найден лист: Состав_акций');
+  tables.Состав_акций = [['offer_id', 'порядок', 'пункт']];
+  tables.Акции[0][3] = 'активность';
+  assert.equal(get().error, 'Не найден столбец: активна');
+});
+
 test('promotion lead checks current activation and price before sending', () => {
   const { context, tables, telegramMessages } = makeApi();
   const submit = (overrides = {}) => JSON.parse(context.doPost({ parameter: {
