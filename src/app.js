@@ -102,9 +102,89 @@ maintenance.addEventListener('change', async () => {
 $('#calculator-form').addEventListener('submit', event => {
   event.preventDefault();
   if (!selectedQuote || selectedQuote.modelId !== variant.value || selectedQuote.type !== maintenance.value) return;
-  const summary = `${brand.value} ${model.value} · ${variant.selectedOptions[0].textContent} · ${maintenance.value} · ${money(selectedQuote.price)} (№ ${selectedQuote.priceId})`;
-  $('#selected-service').textContent = `Вы выбрали: ${summary}`;
-  $('#contacts').scrollIntoView({ behavior: 'smooth' });
+  $('#booking-service').textContent = `${brand.value} ${model.value} · ${variant.selectedOptions[0].textContent} · ${maintenance.value} · ${money(selectedQuote.price)}`;
+  $('#booking-status').textContent = '';
+  $('#booking-dialog').showModal();
+  $('#booking-name').focus();
+});
+const bookingDialog = $('#booking-dialog'), bookingForm = $('#booking-form');
+const bookingName = $('#booking-name'), bookingPhone = $('#booking-phone'), bookingConsent = $('#booking-consent');
+const bookingSubmit = $('#booking-submit'), bookingRequired = $('#booking-required');
+let bookingPending = false, bookingSent = false;
+const phoneDigits = value => {
+  let digits = value.replace(/\D/g, '');
+  if (digits.length === 10 && digits.startsWith('9')) digits = `7${digits}`;
+  if (digits.length === 11 && digits.startsWith('8')) digits = `7${digits.slice(1)}`;
+  return /^7\d{10}$/.test(digits) ? `+${digits}` : null;
+};
+function updateBookingValidity() {
+  const name = bookingName.value.trim().replace(/\s+/g, ' ');
+  const nameValid = name.length >= 2 && name.length <= 80 && /^[\p{L}][\p{L}\s.'-]*$/u.test(name);
+  const phoneValid = !!phoneDigits(bookingPhone.value);
+  const valid = nameValid && phoneValid && bookingConsent.checked;
+  bookingSubmit.disabled = !valid || bookingPending || bookingSent;
+  bookingRequired.hidden = valid || bookingPending || bookingSent;
+  if (bookingName.value) bookingName.setAttribute('aria-invalid', String(!nameValid));
+  if (bookingPhone.value) bookingPhone.setAttribute('aria-invalid', String(!phoneValid));
+  return valid;
+}
+[bookingName, bookingPhone].forEach(input => input.addEventListener('input', updateBookingValidity));
+bookingConsent.addEventListener('change', updateBookingValidity);
+$('#booking-close').addEventListener('click', () => bookingDialog.close());
+bookingDialog.addEventListener('close', () => { bookingForm.reset(); bookingSent = false; updateBookingValidity(); });
+const callLink = $('#booking-call');
+if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
+  callLink.href = `tel:${config.phone}`;
+  callLink.removeAttribute('aria-disabled');
+  callLink.removeAttribute('tabindex');
+} else {
+  callLink.title = 'Номер сервиса скоро появится';
+  callLink.addEventListener('click', event => event.preventDefault());
+}
+if (/^https:\/\//.test(config.privacyPolicyUrl)) {
+  $('#privacy-link').href = config.privacyPolicyUrl;
+  $('#privacy-link-wrap').hidden = false;
+}
+bookingForm.addEventListener('submit', event => {
+  event.preventDefault();
+  if (!updateBookingValidity() || bookingPending || bookingSent || !selectedQuote) return;
+  const quote = selectedQuote;
+  bookingPending = true;
+  updateBookingValidity();
+  $('#booking-status').textContent = 'Отправляем заявку…';
+  const nonce = `booking_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const transport = document.createElement('form');
+  transport.method = 'POST';
+  transport.action = config.maintenanceApiUrl;
+  transport.target = 'booking-transport';
+  transport.hidden = true;
+  const fields = { action: 'lead', nonce, name: bookingName.value.trim(), phone: phoneDigits(bookingPhone.value),
+    consent: 'yes', modelId: quote.modelId, type: quote.type, priceId: quote.priceId, website: '' };
+  Object.entries(fields).forEach(([key, value]) => {
+    const field = document.createElement('input');
+    field.name = key; field.value = value; transport.append(field);
+  });
+  document.body.append(transport);
+  let completed = false;
+  const finish = (message, sent) => {
+    if (completed) return;
+    completed = true;
+    clearTimeout(timer);
+    window.removeEventListener('message', receive);
+    transport.remove();
+    bookingPending = false;
+    bookingSent = sent;
+    $('#booking-status').textContent = message;
+    updateBookingValidity();
+  };
+  const receive = event => {
+    if (!/^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(event.origin) && event.origin !== 'https://script.google.com') return;
+    if (event.data?.source !== 'gts-booking' || event.data.nonce !== nonce) return;
+    finish(event.data.ok ? 'Заявка отправлена. Мы свяжемся с вами.' : 'Не удалось отправить заявку. Попробуйте ещё раз.', !!event.data.ok);
+  };
+  window.addEventListener('message', receive);
+  const timer = setTimeout(() => finish('Не удалось подтвердить отправку. Пожалуйста, свяжитесь с нами по телефону.', false), 20000);
+  transport.submit();
 });
 loadCatalog();
 const serviceCards = [...document.querySelectorAll('.service-card')];

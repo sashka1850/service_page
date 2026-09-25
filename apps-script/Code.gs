@@ -1,4 +1,4 @@
-/** Read-only web app. Create this script from the Google Sheet (Extensions → Apps Script). */
+/** Web app bound to the price spreadsheet (Extensions → Apps Script). */
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
@@ -27,6 +27,69 @@ function doGet(e) {
     ? callback + '(' + JSON.stringify(result) + ');'
     : JSON.stringify(result))
     .setMimeType(callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON);
+}
+
+/** Form POST keeps the customer's name and phone out of URLs and browser history. */
+function doPost(e) {
+  var p = (e && e.parameter) || {};
+  var nonce = String(p.nonce || '');
+  var result = { source: 'gts-booking', nonce: /^[a-zA-Z0-9_]{12,100}$/.test(nonce) ? nonce : '', ok: false };
+  try {
+    if (p.action !== 'lead' || !result.nonce || p.website || p.consent !== 'yes') throw new Error('Invalid form');
+    var name = String(p.name || '').trim().replace(/\s+/g, ' ');
+    if (name.length < 2 || name.length > 80 || !/^[\p{L}][\p{L}\s.'-]*$/u.test(name)) throw new Error('Invalid name');
+    var phone = normalizePhone_(p.phone);
+    if (!phone) throw new Error('Invalid phone');
+    var db = readDatabase_();
+    var match = db.prices.filter(function(row) {
+      return row.modelId === p.modelId && row.type === p.type && row.priceId === p.priceId;
+    });
+    var car = db.models.filter(function(row) { return row.modelId === p.modelId; });
+    if (match.length !== 1 || car.length !== 1) throw new Error('Invalid quote');
+    var credentials = PropertiesService.getScriptProperties();
+    var token = credentials.getProperty('TELEGRAM_BOT_TOKEN');
+    var chatId = credentials.getProperty('TELEGRAM_CHAT_ID');
+    if (!token || !chatId) throw new Error('Telegram is not configured');
+    var cache = CacheService.getScriptCache();
+    if (cache.get('lead-' + result.nonce)) { result.ok = true; return leadResponse_(result); }
+    var message = [
+      'Новая заявка на ТО',
+      'Имя: ' + name,
+      'Телефон: ' + phone,
+      'Автомобиль: ' + car[0].brand + ' ' + car[0].model + ' — ' + car[0].variant,
+      'Услуга: ' + match[0].type,
+      'Стоимость: ' + match[0].price + ' ₽',
+      'ID цены: ' + match[0].priceId,
+      'Согласие на обработку данных: да'
+    ].join('\n');
+    var response = UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+      method: 'post', contentType: 'application/json',
+      payload: JSON.stringify({ chat_id: chatId, text: message }),
+      muteHttpExceptions: true
+    });
+    if (response.getResponseCode() !== 200 || !JSON.parse(response.getContentText()).ok) throw new Error('Telegram send failed');
+    cache.put('lead-' + result.nonce, 'sent', 600);
+    result.ok = true;
+  } catch (error) {
+    // Do not log names, phone numbers or the Telegram token.
+    console.error('Lead delivery failed');
+  }
+  return leadResponse_(result);
+}
+
+function normalizePhone_(value) {
+  var digits = String(value || '').replace(/\D/g, '');
+  if (digits.length === 10 && digits.charAt(0) === '9') digits = '7' + digits;
+  if (digits.length === 11 && digits.charAt(0) === '8') digits = '7' + digits.slice(1);
+  return /^7\d{10}$/.test(digits) ? '+' + digits : '';
+}
+
+function leadResponse_(result) {
+  // The POST targets a hidden iframe. Its HTML sends only the outcome and
+  // request nonce to the enclosing site; the visitor's details stay server-side.
+  var html = '<!doctype html><meta charset="utf-8"><script>window.top.postMessage(' +
+    JSON.stringify(result) + ',"*");<\/script>';
+  return HtmlService.createHtmlOutput(html).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function readDatabase_() {
