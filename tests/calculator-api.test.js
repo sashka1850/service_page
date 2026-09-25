@@ -19,16 +19,35 @@ function makeApi() {
       ['P0004', 'M002', 'ТО 15 000', 200, 'готово'],
       ['P0005', 'M003', 'ТО 15 000', 300, 'готово'],
     ],
+    Акции: [
+      ['offer_id', 'название', 'цена_руб', 'активна', 'порядок'],
+      ['O001', 'Диагностика двигателя', 2999, true, 2],
+      ['O002', 'Диагностика ходовой', 999, false, 1],
+      ['O003', 'Диагностика кондиционера', 3999, true, 1],
+    ],
+    Состав_акций: [
+      ['offer_id', 'порядок', 'пункт'],
+      ['O001', 2, 'Проверка ошибок'],
+      ['O001', 1, 'Осмотр двигателя'],
+      ['O003', 1, 'Проверка кондиционера'],
+    ],
   };
   const cache = new Map();
+  const telegramMessages = [];
   const context = vm.createContext({
     CacheService: { getScriptCache: () => ({ get: key => cache.get(key), put: (key, value) => cache.set(key, value) }) },
-    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: name => tables[name] && ({ getDataRange: () => ({ getValues: () => tables[name] }) }) }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: name => tables[name] && ({ getDataRange: () => ({ getValues: () => tables[name].map(row => [...row]) }) }) }) },
     ContentService: { MimeType: { JAVASCRIPT: 'js', JSON: 'json', TEXT: 'text' }, createTextOutput: text => ({ setMimeType: mime => ({ text, mime }) }) },
+    HtmlService: { XFrameOptionsMode: { ALLOWALL: 'allow' }, createHtmlOutput: html => ({ setXFrameOptionsMode: () => ({ html }) }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: key => ({ TELEGRAM_BOT_TOKEN: 'fake-test-token', TELEGRAM_CHAT_ID: '1234' })[key] }) },
+    UrlFetchApp: { fetch: (url, options) => {
+      telegramMessages.push({ url, body: JSON.parse(options.payload) });
+      return { getResponseCode: () => 200, getContentText: () => '{"ok":true}' };
+    } },
     console,
   });
   vm.runInContext(readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8'), context);
-  return { context, tables };
+  return { context, tables, telegramMessages };
 }
 
 test('only unique confirmed vehicles and their available TO types are offered', () => {
@@ -37,6 +56,28 @@ test('only unique confirmed vehicles and their available TO types are offered', 
   assert.equal(result.ok, true);
   assert.deepEqual([...result.models.map(v => v.modelId)], ['M001']);
   assert.deepEqual([...result.models[0].types], ['ТО 15 000', 'ТО 30 000']);
+});
+
+test('valid consent and quote deliver one Telegram lead without trusting a client price', () => {
+  const { context, telegramMessages } = makeApi();
+  const form = { action: 'lead', nonce: 'booking_123456789000_test', name: 'Анна',
+    phone: '8 (999) 123-45-67', consent: 'yes', modelId: 'M001', type: 'ТО 15 000', priceId: 'P0001' };
+  assert.match(context.doPost({ parameter: form }).html, /"ok":true/);
+  assert.equal(telegramMessages.length, 1);
+  assert.match(telegramMessages[0].body.text, /\+79991234567/);
+  assert.match(telegramMessages[0].body.text, /16646 ₽/);
+  context.doPost({ parameter: form });
+  assert.equal(telegramMessages.length, 1);
+});
+
+test('invalid consent, phone and price ID never send a lead', () => {
+  const { context, telegramMessages } = makeApi();
+  const form = { action: 'lead', nonce: 'booking_123456789000_test', name: 'Анна',
+    phone: '+79991234567', consent: 'yes', modelId: 'M001', type: 'ТО 15 000', priceId: 'P0001' };
+  for (const overrides of [{ consent: '' }, { phone: '123' }, { priceId: 'P0002' }]) {
+    assert.match(context.doPost({ parameter: { ...form, ...overrides } }).html, /"ok":false/);
+  }
+  assert.equal(telegramMessages.length, 0);
 });
 
 test('quote resolves ID and numeric price, rejects unconfirmed or ambiguous selections', () => {
@@ -48,4 +89,31 @@ test('quote resolves ID and numeric price, rejects unconfirmed or ambiguous sele
   assert.equal(request('M002', 'ТО 15 000').ok, false);
   assert.equal(request('M001', 'unknown').ok, false);
   assert.equal(context.doGet({ parameter: { action: 'catalog', callback: 'alert(1)' } }).text, 'Invalid callback');
+});
+
+test('promotions list only active rows, ordered with their current prices and contents', () => {
+  const { context, tables } = makeApi();
+  const offers = () => JSON.parse(context.doGet({ parameter: { action: 'offers' } }).text).offers;
+  assert.deepEqual([...offers().map(row => row.offerId)], ['O003', 'O001']);
+  assert.deepEqual([...offers()[1].items], ['Осмотр двигателя', 'Проверка ошибок']);
+  tables.Акции.push(['O004', 'Замена масла', 1200, true, 3]);
+  assert.equal(offers().length, 2); // Public list is cached briefly.
+});
+
+test('promotion lead checks current activation and price before sending', () => {
+  const { context, tables, telegramMessages } = makeApi();
+  const submit = (overrides = {}) => JSON.parse(context.doPost({ parameter: {
+    action: 'lead', kind: 'offer', nonce: 'booking_123456789000_test',
+    name: 'Анна', phone: '+79991234567', consent: 'yes', offerId: 'O001', expectedPrice: '2999',
+    ...overrides,
+  } }).html.match(/postMessage\((\{.*?\}),"\*"\)/)[1]);
+  tables.Акции[1][2] = 3199;
+  assert.equal(submit().code, 'PRICE_CHANGED');
+  assert.equal(telegramMessages.length, 0);
+  assert.equal(submit({ expectedPrice: '3199' }).ok, true);
+  assert.match(telegramMessages[0].body.text, /Диагностика двигателя/);
+  assert.match(telegramMessages[0].body.text, /3199 ₽/);
+  tables.Акции[1][3] = false;
+  assert.equal(submit({ nonce: 'booking_123456789001_test', expectedPrice: '3199' }).code, 'OFFER_UNAVAILABLE');
+  assert.equal(telegramMessages.length, 1);
 });
