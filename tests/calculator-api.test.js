@@ -34,20 +34,21 @@ function makeApi() {
   };
   const cache = new Map();
   const telegramMessages = [];
+  const telegram = { status: 200, ok: true, token: 'fake-test-token', chatId: '1234' };
   const context = vm.createContext({
     CacheService: { getScriptCache: () => ({ get: key => cache.get(key), put: (key, value) => cache.set(key, value) }) },
     SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: name => tables[name] && ({ getDataRange: () => ({ getValues: () => tables[name].map(row => [...row]) }) }) }) },
     ContentService: { MimeType: { JAVASCRIPT: 'js', JSON: 'json', TEXT: 'text' }, createTextOutput: text => ({ setMimeType: mime => ({ text, mime }) }) },
     HtmlService: { XFrameOptionsMode: { ALLOWALL: 'allow' }, createHtmlOutput: html => ({ setXFrameOptionsMode: () => ({ html }) }) },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: key => ({ TELEGRAM_BOT_TOKEN: 'fake-test-token', TELEGRAM_CHAT_ID: '1234' })[key] }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: key => ({ TELEGRAM_BOT_TOKEN: telegram.token, TELEGRAM_CHAT_ID: telegram.chatId })[key] }) },
     UrlFetchApp: { fetch: (url, options) => {
       telegramMessages.push({ url, body: JSON.parse(options.payload) });
-      return { getResponseCode: () => 200, getContentText: () => '{"ok":true}' };
+      return { getResponseCode: () => telegram.status, getContentText: () => JSON.stringify({ ok: telegram.ok }) };
     } },
     console,
   });
   vm.runInContext(readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8'), context);
-  return { context, tables, telegramMessages };
+  return { context, tables, telegramMessages, telegram };
 }
 
 test('only unique confirmed vehicles and their available TO types are offered', () => {
@@ -126,4 +127,19 @@ test('promotion lead checks current activation and price before sending', () => 
   tables.Акции[1][3] = false;
   assert.equal(submit({ nonce: 'booking_123456789001_test', expectedPrice: '3199' }).code, 'OFFER_UNAVAILABLE');
   assert.equal(telegramMessages.length, 1);
+});
+
+test('Telegram configuration and delivery errors return diagnostic codes without credentials', () => {
+  const { context, telegram } = makeApi();
+  const lead = nonce => JSON.parse(context.doPost({ parameter: {
+    action: 'lead', kind: 'offer', nonce, name: 'Анна', phone: '+79991234567',
+    consent: 'yes', offerId: 'O001', expectedPrice: '2999',
+  } }).html.match(/postMessage\((\{.*?\}),"\*"\)/)[1]);
+  telegram.chatId = '';
+  assert.equal(lead('booking_123456789010_test').code, 'TELEGRAM_NOT_CONFIGURED');
+  telegram.chatId = '1234';
+  telegram.status = 401;
+  assert.equal(lead('booking_123456789011_test').code, 'TELEGRAM_BAD_TOKEN');
+  telegram.status = 400;
+  assert.equal(lead('booking_123456789012_test').code, 'TELEGRAM_BAD_CHAT');
 });

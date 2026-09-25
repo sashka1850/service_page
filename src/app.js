@@ -215,7 +215,10 @@ bookingForm.addEventListener('submit', event => {
       updateBookingValidity();
       return;
     }
-    finish(event.data.ok ? 'Заявка отправлена. Мы свяжемся с вами.' : 'Не удалось отправить заявку. Попробуйте ещё раз.', !!event.data.ok);
+    const deliveryErrors = new Set(['TELEGRAM_NOT_CONFIGURED', 'TELEGRAM_BAD_TOKEN',
+      'TELEGRAM_BAD_CHAT', 'TELEGRAM_REQUEST_FAILED', 'TELEGRAM_SEND_FAILED']);
+    finish(event.data.ok ? 'Заявка отправлена. Мы свяжемся с вами.'
+      : `Не удалось отправить заявку. Попробуйте позже.${deliveryErrors.has(event.data.code) ? ` Код: ${event.data.code}.` : ''}`, !!event.data.ok);
   };
   window.addEventListener('message', receive);
   const timer = setTimeout(() => finish('Не удалось подтвердить отправку. Пожалуйста, свяжитесь с нами по телефону.', false), 20000);

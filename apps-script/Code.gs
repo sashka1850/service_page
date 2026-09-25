@@ -76,23 +76,39 @@ function doPost(e) {
         'ID цены: ' + match[0].priceId];
     } else throw new Error('Unknown lead kind');
     var credentials = PropertiesService.getScriptProperties();
-    var token = credentials.getProperty('TELEGRAM_BOT_TOKEN');
-    var chatId = credentials.getProperty('TELEGRAM_CHAT_ID');
-    if (!token || !chatId) throw new Error('Telegram is not configured');
+    var token = String(credentials.getProperty('TELEGRAM_BOT_TOKEN') || '').trim();
+    var chatId = String(credentials.getProperty('TELEGRAM_CHAT_ID') || '').trim();
+    if (!token || !chatId) {
+      result.code = 'TELEGRAM_NOT_CONFIGURED';
+      throw new Error('Telegram is not configured');
+    }
     var cache = CacheService.getScriptCache();
     if (cache.get('lead-' + result.nonce)) { result.ok = true; return leadResponse_(result); }
     var message = messageLines.concat('Согласие на обработку данных: да').join('\n');
+    result.code = 'TELEGRAM_REQUEST_FAILED';
     var response = UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
       method: 'post', contentType: 'application/json',
       payload: JSON.stringify({ chat_id: chatId, text: message }),
       muteHttpExceptions: true
     });
-    if (response.getResponseCode() !== 200 || !JSON.parse(response.getContentText()).ok) throw new Error('Telegram send failed');
-    cache.put('lead-' + result.nonce, 'sent', 600);
+    var status = response.getResponseCode();
+    if (status !== 200) {
+      result.code = status === 401 || status === 404 ? 'TELEGRAM_BAD_TOKEN'
+        : status === 400 || status === 403 ? 'TELEGRAM_BAD_CHAT'
+        : 'TELEGRAM_SEND_FAILED';
+      throw new Error('Telegram HTTP ' + status);
+    }
+    if (!JSON.parse(response.getContentText()).ok) {
+      result.code = 'TELEGRAM_SEND_FAILED';
+      throw new Error('Telegram rejected the message');
+    }
     result.ok = true;
+    delete result.code;
+    try { cache.put('lead-' + result.nonce, 'sent', 600); }
+    catch (cacheError) { console.error('Lead deduplication cache unavailable'); }
   } catch (error) {
     // Do not log names, phone numbers or the Telegram token.
-    console.error('Lead delivery failed');
+    console.error('Lead delivery failed: ' + (result.code || 'UNEXPECTED'));
   }
   return leadResponse_(result);
 }
