@@ -11,7 +11,6 @@ const config = {
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/service_zone.mp4', // Локальный путь, например ./assets/hero.mp4.
   maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
-  privacyPolicyUrl: '', // Опубликованная политика обработки персональных данных, если есть.
 };
 const services = [
   { title: 'Техническое обслуживание', text: 'Плановое обслуживание по регламенту автомобиля. Масло, фильтры и необходимые проверки.', action: 'Записаться', target: '#contacts', icon: '01' },
@@ -183,10 +182,6 @@ if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
 } else {
   callLink.title = 'Номер сервиса скоро появится';
   callLink.addEventListener('click', event => event.preventDefault());
-}
-if (/^https:\/\//.test(config.privacyPolicyUrl)) {
-  $('#privacy-link').href = config.privacyPolicyUrl;
-  $('#privacy-link-wrap').hidden = false;
 }
 bookingForm.addEventListener('submit', event => {
   event.preventDefault();

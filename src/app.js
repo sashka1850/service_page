@@ -141,10 +141,6 @@ if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
   callLink.title = 'Номер сервиса скоро появится';
   callLink.addEventListener('click', event => event.preventDefault());
 }
-if (/^https:\/\//.test(config.privacyPolicyUrl)) {
-  $('#privacy-link').href = config.privacyPolicyUrl;
-  $('#privacy-link-wrap').hidden = false;
-}
 bookingForm.addEventListener('submit', event => {
   event.preventDefault();
   if (!updateBookingValidity() || bookingPending || bookingSent || !selectedQuote) return;
