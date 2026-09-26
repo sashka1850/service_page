@@ -234,8 +234,7 @@ if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
   callLink.removeAttribute('aria-disabled');
   callLink.removeAttribute('tabindex');
 } else {
-  callLink.title = 'Номер сервиса скоро появится';
-  callLink.addEventListener('click', event => event.preventDefault());
+  callLink.hidden = true;
 }
 function showBookingResult(mode, text = '') {
   bookingResult.dataset.state = mode;
