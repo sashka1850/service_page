@@ -6,9 +6,9 @@
   <meta name="description" content="Genesis Team Service — ремонт и обслуживание Hyundai, Kia и Genesis в Нижнем Новгороде. Техническое обслуживание, диагностика и ремонт.">
   <meta name="theme-color" content="#161b1b">
   <title>GTS — сервис Hyundai, Kia и Genesis в Нижнем Новгороде</title>
-  <link rel="stylesheet" href="./src/styles.css?v=booking-20260926b">
+  <link rel="stylesheet" href="./src/styles.css?v=calculator-20260926">
   <link rel="stylesheet" href="./src/contact-map.css">
-  <script defer src="./src/site.js?v=booking-20260926b"></script>
+  <script defer src="./src/site.js?v=calculator-20260926"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -42,8 +42,8 @@
         <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Выберите автомобиль и вид ТО, чтобы узнать стоимость обслуживания.</p></div>
         <form id="calculator-form" class="calculator-card">
           <h3>Калькулятор ТО</h3>
-          <div class="form-row"><label>Марка<select id="brand" required disabled><option value="">Загрузка марок…</option></select></label><label>Модель<select id="model" required disabled><option value="">Выберите модель</option></select></label></div>
-          <div class="form-row calculator-extra"><label>Вариант автомобиля<select id="variant" required disabled><option value="">Выберите вариант</option></select></label><label>Вид ТО<select id="maintenance-type" required disabled><option value="">Выбрать ТО</option></select></label></div>
+          <div class="form-row"><label><span class="visually-hidden">Марка</span><select id="brand" required disabled><option value="">Загрузка марок…</option></select></label><label><span class="visually-hidden">Модель</span><select id="model" required disabled><option value="">Выберите модель</option></select></label></div>
+          <div class="form-row calculator-extra"><label><span class="visually-hidden">Комплектация</span><select id="variant" required disabled><option value="">Выберите комплектацию</option></select></label><label><span class="visually-hidden">Вид ТО</span><select id="maintenance-type" required disabled><option value="">Выбрать ТО</option></select></label></div>
           <div class="price-result" aria-live="polite" aria-atomic="true"><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
           <button class="button dark" type="submit" disabled>Записаться</button>
         </form>

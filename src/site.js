@@ -108,12 +108,12 @@ async function loadCatalog() {
 brand.addEventListener('change', () => {
   setOptions(model, 'Выберите модель', brand.value
     ? [...new Set(catalog.filter(item => item.brand === brand.value).map(item => item.model))].sort().map(value => ({ label: value, value })) : []);
-  setOptions(variant, 'Выберите вариант', []);
+  setOptions(variant, 'Выберите комплектацию', []);
   setOptions(maintenance, 'Выбрать ТО', []);
   resetQuote();
 });
 model.addEventListener('change', () => {
-  setOptions(variant, 'Выберите вариант', catalog
+  setOptions(variant, 'Выберите комплектацию', catalog
     .filter(item => item.brand === brand.value && item.model === model.value)
     .map(item => ({ label: item.variant, value: item.modelId })));
   setOptions(maintenance, 'Выбрать ТО', []);
