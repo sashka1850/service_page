@@ -533,12 +533,7 @@ h1 {
 }
 
 .service-details .service-action {
-  font-size:12px;
-  font-weight:600;
   margin-top:auto;
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
   width:100%;
 }
 
@@ -758,14 +753,7 @@ select:disabled {
 
 .offer-card .button {
   margin-top:auto;
-  font-size:12px;
-  padding-inline:12px;
-  gap:15px;
-}
-
-.offer-card .service-action {
   width:100%;
-  justify-content:space-between;
 }
 
 .space-section {
