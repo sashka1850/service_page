@@ -607,7 +607,7 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
   gallery.setAttribute('role', 'region');
   gallery.setAttribute('aria-label', `Фотоальбом: ${card.querySelector('h3').textContent}`);
   original.replaceWith(gallery);
-  gallery.innerHTML = `<div class="space-slides"></div><div class="photo-count" aria-live="polite" aria-atomic="true"></div>`;
+  gallery.innerHTML = `<div class="space-slides"></div><div class="photo-count" aria-live="polite" aria-atomic="true"></div><button class="gallery-arrow gallery-arrow-prev" type="button" aria-label="Предыдущее фото"><svg viewBox="0 0 16 20" aria-hidden="true"><path d="M10 3 6 10l4 7"/></svg></button><button class="gallery-arrow gallery-arrow-next" type="button" aria-label="Следующее фото"><svg viewBox="0 0 16 20" aria-hidden="true"><path d="m6 3 4 7-4 7"/></svg></button>`;
   const slides = gallery.querySelector('.space-slides');
   let current = 0;
   let suppressOpenUntil = 0;
@@ -703,5 +703,8 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
     if (zoomButton.hasPointerCapture(event.pointerId)) zoomButton.releasePointerCapture(event.pointerId);
   });
   zoomButton.addEventListener('pointercancel', () => { mouseStart = null; });
+  gallery.querySelector('.gallery-arrow-prev').addEventListener('click', () => show(current - 1));
+  gallery.querySelector('.gallery-arrow-next').addEventListener('click', () => show(current + 1));
+  gallery.querySelectorAll('.gallery-arrow').forEach(arrow => { arrow.hidden = photos.length < 2; });
   show(0);
 });
