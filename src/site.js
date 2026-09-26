@@ -10,7 +10,11 @@ const config = {
   house: '', // В исходнике расходятся 52б и 52д — требуется подтверждение.
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/service_zone.mp4', // Локальный путь, например ./assets/hero.mp4.
-  maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
+};
+const prices = {
+  Hyundai: { Solaris: 12000, Tucson: 13000, 'Santa Fe': 18000 },
+  Kia: { Rio: 11500, K5: 13500, Sorento: 17500 },
+  Genesis: { G70: 17000, G80: 25000, G90: 35000 },
 };
 const services = [
   { title: 'Техническое обслуживание', text: 'Плановое обслуживание по регламенту автомобиля. Масло, фильтры и необходимые проверки.', action: 'Записаться', target: '#contacts', icon: '01' },
@@ -18,11 +22,19 @@ const services = [
   { title: 'Диагностика', text: 'Проверка двигателя, ходовой части и других систем. Поиск причины неисправности.', action: 'Записаться', target: '#contacts', icon: '03' },
   { title: 'Детейлинг и доработки', text: 'Полировка, химчистка, защитная плёнка и другие работы по уходу за автомобилем.', action: 'Записаться', target: '#contacts', icon: '04' },
 ];
+const offers = [
+  { title: 'Диагностика двигателя', price: 2999, items: ['Компьютерная диагностика', 'Замер компрессии и эндоскопия', 'Проверка навесного оборудования', 'Осмотр на предмет течей'] },
+  { title: 'Диагностика ходовой', price: 999, items: ['Проверка амортизаторов', 'Осмотр тормозной системы', 'Проверка люфтов', 'Осмотр резинотехнических деталей'] },
+  { title: 'Диагностика кондиционера', price: 3999, items: ['Проверка эффективности охлаждения', 'Проверка уровня хладагента', 'Осмотр испарителя и конденсора'] },
+];
 const team = [
   { name: 'Тимофей Дмитриев', role: 'Руководитель ремонтного цеха', image: 'timofey.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Диагностика, технические вопросы и организация ремонта.' },
   { name: 'Владислав Матросов', role: 'Директор сервиса', image: 'vladislav.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Организация работы команды и клиентский сервис.' },
   { name: 'Вадим Смирнов', role: 'Старший сервисный консультант', image: 'vadim.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Обсуждение задач и сопровождение обслуживания.' },
 ];
+function getPrice(brand, model) {
+  return Object.hasOwn(prices, brand) && Object.hasOwn(prices[brand], model) ? prices[brand][model] : null;
+}
 
 // Альбомы пространства сервиса. Добавляйте любое количество { src, alt }.
 // Новые снимки клиентской и ремонтной зон пока не предоставлены.
@@ -37,231 +49,28 @@ const spaceAlbums = [
 ];
 
 const $ = (selector) => document.querySelector(selector);
-const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value);
+const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 $('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden><p>${escape(s.text)}</p><button class="service-action button light-button" type="button">${escape(s.action)}</button></div></article>`).join('');
-$('#offers-list').innerHTML = '<p role="status">Загружаем актуальные акции…</p>';
+$('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="service-action button light-button" type="button">Записаться</button></article>`).join('');
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
-const brand = $('#brand'), model = $('#model'), variant = $('#variant'), maintenance = $('#maintenance-type');
-const bookButton = $('#calculator-form button[type="submit"]');
-let catalog = [], selectedQuote = null, quoteRequest = 0, activeOffers = [], selectedBooking = null;
-// Apps Script ContentService redirects JSON to a different origin. Its documented
-// JSONP response lets a static site read public, read-only catalogue data.
-function apiRequest(params) {
-  return new Promise((resolve, reject) => {
-    const callback = `__gtsToCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const url = new URL(config.maintenanceApiUrl);
-    Object.entries({ ...params, callback }).forEach(([key, value]) => url.searchParams.set(key, value));
-    const script = document.createElement('script');
-    let settled = false;
-    const finish = (error, result) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      script.remove();
-      delete window[callback];
-      if (error) reject(error); else resolve(result);
-    };
-    window[callback] = result => finish(null, result);
-    script.onerror = () => finish(new Error('Сервис цен недоступен'));
-    const timer = setTimeout(() => finish(new Error('Превышено время ожидания')), 12000);
-    script.src = url.toString();
-    document.head.append(script);
-  });
-}
-function setOptions(select, placeholder, entries) {
-  select.replaceChildren(new Option(placeholder, ''));
-  entries.forEach(({ label, value }) => select.add(new Option(label, value)));
-  select.disabled = !entries.length;
-}
-function resetQuote(message = 'Выберите автомобиль и вид ТО') {
-  quoteRequest++;
-  selectedQuote = null;
-  $('#price').textContent = '—';
-  $('#price-note').textContent = message;
-  bookButton.disabled = true;
-}
-async function loadCatalog() {
-  if (!config.maintenanceApiUrl) {
-    setOptions(brand, 'Калькулятор скоро заработает', []);
-    resetQuote('Для расчёта необходимо подключить таблицу цен.');
-    return;
-  }
-  try {
-    const result = await apiRequest({ action: 'catalog' });
-    if (!result.ok || !Array.isArray(result.models)) throw new Error('Не удалось загрузить каталог');
-    catalog = result.models;
-    setOptions(brand, 'Выберите марку', [...new Set(catalog.map(item => item.brand))].sort().map(value => ({ label: value, value })));
-    if (!catalog.length) resetQuote('Нет доступных автомобилей. Проверьте данные таблицы.');
-  } catch (error) {
-    setOptions(brand, 'Не удалось загрузить марки', []);
-    resetQuote('Не удалось загрузить цены. Попробуйте обновить страницу.');
-  }
+const brand = $('#brand'), model = $('#model');
+Object.keys(prices).forEach(name => brand.add(new Option(name, name)));
+function updatePrice() {
+  const value = getPrice(brand.value, model.value);
+  $('#price').textContent = value === null ? '—' : money(value);
+  $('#price-note').textContent = value === null ? 'Выберите ваш автомобиль' : `${brand.value} ${model.value} · предварительный расчёт`;
 }
 brand.addEventListener('change', () => {
-  setOptions(model, brand.value ? 'Выберите модель' : 'Сначала выберите марку', brand.value
-    ? [...new Set(catalog.filter(item => item.brand === brand.value).map(item => item.model))].sort().map(value => ({ label: value, value })) : []);
-  setOptions(variant, 'Сначала выберите модель', []);
-  setOptions(maintenance, 'Сначала выберите вариант', []);
-  resetQuote();
+  model.replaceChildren(new Option(brand.value ? 'Выберите модель' : 'Сначала выберите марку', ''));
+  model.disabled = !brand.value;
+  if (brand.value) Object.keys(prices[brand.value]).forEach(name => model.add(new Option(name, name)));
+  updatePrice();
 });
-model.addEventListener('change', () => {
-  setOptions(variant, model.value ? 'Выберите вариант' : 'Сначала выберите модель', catalog
-    .filter(item => item.brand === brand.value && item.model === model.value)
-    .map(item => ({ label: item.variant, value: item.modelId })));
-  setOptions(maintenance, 'Сначала выберите вариант', []);
-  resetQuote();
-});
-variant.addEventListener('change', () => {
-  const current = catalog.find(item => item.modelId === variant.value);
-  setOptions(maintenance, current ? 'Выберите вид ТО' : 'Сначала выберите вариант',
-    (current?.types || []).map(value => ({ label: value, value })));
-  resetQuote();
-});
-maintenance.addEventListener('change', async () => {
-  resetQuote();
-  if (!variant.value || !maintenance.value) return;
-  const request = quoteRequest;
-  const modelId = variant.value, type = maintenance.value;
-  $('#price-note').textContent = 'Рассчитываем стоимость…';
-  try {
-    const result = await apiRequest({ action: 'quote', modelId, type });
-    if (request !== quoteRequest) return;
-    if (!result.ok || !result.priceId || !Number.isFinite(result.price)) throw new Error('Стоимость не найдена');
-    selectedQuote = result;
-    $('#price').textContent = money(result.price);
-    $('#price-note').textContent = `${type} · предварительная стоимость`;
-    bookButton.disabled = false;
-  } catch (error) {
-    if (request === quoteRequest) $('#price-note').textContent = 'Не удалось получить цену. Выберите вид ТО ещё раз.';
-  }
-});
+model.addEventListener('change', updatePrice);
 $('#calculator-form').addEventListener('submit', event => {
   event.preventDefault();
-  if (!selectedQuote || selectedQuote.modelId !== variant.value || selectedQuote.type !== maintenance.value) return;
-  openBooking({ kind: 'maintenance', modelId: selectedQuote.modelId, type: selectedQuote.type, priceId: selectedQuote.priceId },
-    `${brand.value} ${model.value} · ${variant.selectedOptions[0].textContent} · ${maintenance.value} · ${money(selectedQuote.price)}`);
 });
-function openBooking(selection, summary) {
-  selectedBooking = selection;
-  $('#booking-service').textContent = summary;
-  $('#booking-status').textContent = '';
-  $('#booking-dialog').showModal();
-  $('#booking-name').focus();
-}
-async function loadOffers() {
-  try {
-    const result = await apiRequest({ action: 'offers' });
-    if (!result.ok || !Array.isArray(result.offers)) throw new Error('Не удалось загрузить акции');
-    activeOffers = result.offers;
-    $('#offers-list').innerHTML = activeOffers.length ? activeOffers.map((offer, index) =>
-      `<article class="offer-card"><span class="card-number">${String(index + 1).padStart(2, '0')} /</span><h3>${escape(offer.title)}</h3><strong>${money(offer.price)}</strong><ul>${offer.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="button light-button" type="button" data-offer-id="${escape(offer.offerId)}">Записаться по акции</button></article>`
-    ).join('') : '<p role="status">Сейчас нет действующих акций.</p>';
-  } catch (error) {
-    $('#offers-list').innerHTML = '<p role="status">Не удалось загрузить акции. Обновите страницу позже.</p>';
-  }
-}
-$('#offers-list').addEventListener('click', event => {
-  const button = event.target.closest('[data-offer-id]');
-  if (!button) return;
-  const offer = activeOffers.find(item => item.offerId === button.dataset.offerId);
-  if (!offer) return;
-  openBooking({ kind: 'offer', offerId: offer.offerId, expectedPrice: offer.price },
-    `${offer.title} · ${money(offer.price)}`);
-});
-const bookingDialog = $('#booking-dialog'), bookingForm = $('#booking-form');
-const bookingName = $('#booking-name'), bookingPhone = $('#booking-phone'), bookingConsent = $('#booking-consent');
-const bookingSubmit = $('#booking-submit'), bookingRequired = $('#booking-required');
-let bookingPending = false, bookingSent = false;
-const phoneDigits = value => {
-  let digits = value.replace(/\D/g, '');
-  if (digits.length === 10 && digits.startsWith('9')) digits = `7${digits}`;
-  if (digits.length === 11 && digits.startsWith('8')) digits = `7${digits.slice(1)}`;
-  return /^7\d{10}$/.test(digits) ? `+${digits}` : null;
-};
-function updateBookingValidity() {
-  const name = bookingName.value.trim().replace(/\s+/g, ' ');
-  const nameValid = name.length >= 2 && name.length <= 80 && /^[\p{L}][\p{L}\s.'-]*$/u.test(name);
-  const phoneValid = !!phoneDigits(bookingPhone.value);
-  const valid = nameValid && phoneValid && bookingConsent.checked;
-  bookingSubmit.disabled = !valid || bookingPending || bookingSent;
-  bookingRequired.hidden = valid || bookingPending || bookingSent;
-  if (bookingName.value) bookingName.setAttribute('aria-invalid', String(!nameValid));
-  if (bookingPhone.value) bookingPhone.setAttribute('aria-invalid', String(!phoneValid));
-  return valid;
-}
-[bookingName, bookingPhone].forEach(input => input.addEventListener('input', updateBookingValidity));
-bookingConsent.addEventListener('change', updateBookingValidity);
-$('#booking-close').addEventListener('click', () => bookingDialog.close());
-bookingDialog.addEventListener('close', () => { bookingForm.reset(); bookingSent = false; selectedBooking = null; updateBookingValidity(); });
-const callLink = $('#booking-call');
-if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
-  callLink.href = `tel:${config.phone}`;
-  callLink.removeAttribute('aria-disabled');
-  callLink.removeAttribute('tabindex');
-} else {
-  callLink.title = 'Номер сервиса скоро появится';
-  callLink.addEventListener('click', event => event.preventDefault());
-}
-bookingForm.addEventListener('submit', event => {
-  event.preventDefault();
-  if (!updateBookingValidity() || bookingPending || bookingSent || !selectedBooking) return;
-  const booking = { ...selectedBooking };
-  bookingPending = true;
-  updateBookingValidity();
-  $('#booking-status').textContent = 'Отправляем заявку…';
-  const nonce = `booking_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const transport = document.createElement('form');
-  transport.method = 'POST';
-  transport.action = config.maintenanceApiUrl;
-  transport.target = 'booking-transport';
-  transport.hidden = true;
-  const fields = { action: 'lead', nonce, name: bookingName.value.trim(), phone: phoneDigits(bookingPhone.value),
-    consent: 'yes', kind: booking.kind, website: '' };
-  if (booking.kind === 'offer') {
-    fields.offerId = booking.offerId;
-    fields.expectedPrice = booking.expectedPrice;
-  } else {
-    fields.modelId = booking.modelId;
-    fields.type = booking.type;
-    fields.priceId = booking.priceId;
-  }
-  Object.entries(fields).forEach(([key, value]) => {
-    const field = document.createElement('input');
-    field.name = key; field.value = value; transport.append(field);
-  });
-  document.body.append(transport);
-  let completed = false;
-  const finish = (message, sent) => {
-    if (completed) return;
-    completed = true;
-    clearTimeout(timer);
-    window.removeEventListener('message', receive);
-    transport.remove();
-    bookingPending = false;
-    bookingSent = sent;
-    $('#booking-status').textContent = message;
-    updateBookingValidity();
-  };
-  const receive = event => {
-    if (!/^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(event.origin) && event.origin !== 'https://script.google.com') return;
-    if (event.data?.source !== 'gts-booking' || event.data.nonce !== nonce) return;
-    if (event.data.code === 'PRICE_CHANGED' || event.data.code === 'OFFER_UNAVAILABLE') {
-      finish('Акция изменилась или больше недоступна. Обновите страницу и проверьте стоимость.', false);
-      bookingSent = true;
-      updateBookingValidity();
-      return;
-    }
-    const errorCode = /^[A-Z_]{3,40}$/.test(event.data.code) ? event.data.code : 'NO_CODE';
-    finish(event.data.ok ? 'Заявка отправлена. Мы свяжемся с вами.'
-      : `Не удалось отправить заявку. Код: ${errorCode}.${event.data.version ? ` Версия API: ${event.data.version}.` : ''}`, !!event.data.ok);
-  };
-  window.addEventListener('message', receive);
-  const timer = setTimeout(() => finish('Не удалось подтвердить отправку. Пожалуйста, свяжитесь с нами по телефону.', false), 20000);
-  transport.submit();
-});
-loadCatalog();
-loadOffers();
 const serviceCards = [...document.querySelectorAll('.service-card')];
 function closeServiceCard(card) {
   const button = card.querySelector('.service-toggle');
