@@ -47,6 +47,8 @@
 .booking-actions [hidden] { display:none!important; }
 .booking-actions > *,.booking-result-actions > * { flex:1 1 170px; justify-content:center; text-align:center; }
 .booking-actions .button[aria-disabled="true"],.booking-actions .button:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.booking-form #booking-call { width:100%; border-color:var(--dark); color:var(--dark); background:transparent; }
+.booking-result #booking-result-call { border-color:var(--dark); color:var(--dark); background:transparent; }
 .booking-result { min-height:390px; padding:55px 38px 38px; display:flex; flex-direction:column; align-items:flex-start; gap:14px; opacity:0; transform:translateY(12px); }
 .booking-result.is-visible { animation:booking-result-enter 360ms cubic-bezier(.2,.75,.2,1) both; }
 .booking-result-icon { width:88px; height:88px; margin-bottom:10px; color:#566858; }
