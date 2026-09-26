@@ -1,5 +1,5 @@
 /** Web app bound to the price spreadsheet (Extensions → Apps Script). */
-var GTS_API_VERSION = '2026-09-25.2';
+var GTS_API_VERSION = '2026-09-26.1';
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
@@ -10,6 +10,14 @@ function doGet(e) {
   var result;
   try {
     if (p.action === 'version') result = { ok: true, version: GTS_API_VERSION };
+    else if (p.action === 'leadStatus') {
+      var requestNonce = String(p.nonce || '');
+      if (!/^[a-zA-Z0-9_]{12,100}$/.test(requestNonce)) {
+        result = { ok: false, error: 'Invalid request' };
+      } else {
+        result = { ok: true, status: CacheService.getScriptCache().get('lead-' + requestNonce) === 'sent' ? 'sent' : 'pending' };
+      }
+    }
     else if (p.action === 'offers') result = { ok: true, offers: readOffers_(false) };
     else if (p.action === 'catalog') result = { ok: true, models: readDatabase_().models };
     else if (p.action === 'quote') {

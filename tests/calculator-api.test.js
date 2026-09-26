@@ -147,8 +147,21 @@ test('Telegram configuration and delivery errors return diagnostic codes without
 test('version endpoint and rejected lead always expose a safe diagnostic code', () => {
   const { context } = makeApi();
   const version = JSON.parse(context.doGet({ parameter: { action: 'version' } }).text);
-  assert.equal(version.version, '2026-09-25.2');
+  assert.equal(version.version, '2026-09-26.1');
   const html = context.doPost({ parameter: { action: 'lead', nonce: 'booking_123456789020_test' } }).html;
   assert.match(html, /"code":"INVALID_FORM"/);
-  assert.match(html, /"version":"2026-09-25.2"/);
+  assert.match(html, /"version":"2026-09-26.1"/);
+});
+
+test('lead status confirms delivery by nonce without exposing customer details', () => {
+  const { context } = makeApi();
+  const nonce = 'booking_123456789099_test';
+  const status = value => JSON.parse(context.doGet({ parameter: { action: 'leadStatus', nonce: value } }).text);
+  assert.equal(status(nonce).status, 'pending');
+  assert.equal(status('invalid').ok, false);
+  context.doPost({ parameter: { action: 'lead', kind: 'offer', nonce,
+    name: 'Анна', phone: '+79991234567', consent: 'yes', offerId: 'O001', expectedPrice: '2999' } });
+  const result = status(nonce);
+  assert.equal(result.status, 'sent');
+  assert.equal(JSON.stringify(result).includes('Анна'), false);
 });

@@ -106,22 +106,22 @@ async function loadCatalog() {
   }
 }
 brand.addEventListener('change', () => {
-  setOptions(model, brand.value ? 'Выберите модель' : 'Сначала выберите марку', brand.value
+  setOptions(model, 'Выберите модель', brand.value
     ? [...new Set(catalog.filter(item => item.brand === brand.value).map(item => item.model))].sort().map(value => ({ label: value, value })) : []);
-  setOptions(variant, 'Сначала выберите модель', []);
-  setOptions(maintenance, 'Сначала выберите вариант', []);
+  setOptions(variant, 'Выберите вариант', []);
+  setOptions(maintenance, 'Выбрать ТО', []);
   resetQuote();
 });
 model.addEventListener('change', () => {
-  setOptions(variant, model.value ? 'Выберите вариант' : 'Сначала выберите модель', catalog
+  setOptions(variant, 'Выберите вариант', catalog
     .filter(item => item.brand === brand.value && item.model === model.value)
     .map(item => ({ label: item.variant, value: item.modelId })));
-  setOptions(maintenance, 'Сначала выберите вариант', []);
+  setOptions(maintenance, 'Выбрать ТО', []);
   resetQuote();
 });
 variant.addEventListener('change', () => {
   const current = catalog.find(item => item.modelId === variant.value);
-  setOptions(maintenance, current ? 'Выберите вид ТО' : 'Сначала выберите вариант',
+  setOptions(maintenance, 'Выбрать ТО',
     (current?.types || []).map(value => ({ label: value, value })));
   resetQuote();
 });
@@ -151,6 +151,16 @@ $('#calculator-form').addEventListener('submit', event => {
 });
 function openBooking(selection, summary) {
   selectedBooking = selection;
+  bookingForm.reset();
+  bookingForm.hidden = false;
+  bookingForm.classList.remove('is-leaving');
+  bookingResult.hidden = true;
+  bookingResult.classList.remove('is-visible');
+  bookingDialog.setAttribute('aria-labelledby', 'booking-title');
+  bookingSent = false;
+  bookingPending = false;
+  activeBookingNonce = null;
+  updateBookingValidity();
   $('#booking-service').textContent = summary;
   $('#booking-status').textContent = '';
   $('#booking-dialog').showModal();
@@ -179,7 +189,10 @@ $('#offers-list').addEventListener('click', event => {
 const bookingDialog = $('#booking-dialog'), bookingForm = $('#booking-form');
 const bookingName = $('#booking-name'), bookingPhone = $('#booking-phone'), bookingConsent = $('#booking-consent');
 const bookingSubmit = $('#booking-submit'), bookingRequired = $('#booking-required');
-let bookingPending = false, bookingSent = false;
+const bookingResult = $('#booking-result'), bookingResultTitle = $('#booking-result-title');
+const bookingResultCall = $('#booking-result-call'), bookingResultRetry = $('#booking-result-retry');
+const bookingResultCheck = $('#booking-result-check'), bookingResultDone = $('#booking-result-done');
+let bookingPending = false, bookingSent = false, activeBookingNonce = null;
 const phoneDigits = value => {
   let digits = value.replace(/\D/g, '');
   if (digits.length === 10 && digits.startsWith('9')) digits = `7${digits}`;
@@ -200,24 +213,84 @@ function updateBookingValidity() {
 [bookingName, bookingPhone].forEach(input => input.addEventListener('input', updateBookingValidity));
 bookingConsent.addEventListener('change', updateBookingValidity);
 $('#booking-close').addEventListener('click', () => bookingDialog.close());
-bookingDialog.addEventListener('close', () => { bookingForm.reset(); bookingSent = false; selectedBooking = null; updateBookingValidity(); });
+bookingResultDone.addEventListener('click', () => bookingDialog.close());
+bookingDialog.addEventListener('close', () => {
+  activeBookingNonce = null;
+  bookingForm.reset();
+  bookingForm.hidden = false;
+  bookingForm.classList.remove('is-leaving');
+  bookingResult.hidden = true;
+  bookingResult.classList.remove('is-visible');
+  bookingDialog.setAttribute('aria-labelledby', 'booking-title');
+  bookingPending = false;
+  bookingSent = false;
+  selectedBooking = null;
+  updateBookingValidity();
+});
 const callLink = $('#booking-call');
 if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
   callLink.href = `tel:${config.phone}`;
+  bookingResultCall.href = `tel:${config.phone}`;
   callLink.removeAttribute('aria-disabled');
   callLink.removeAttribute('tabindex');
 } else {
   callLink.title = 'Номер сервиса скоро появится';
   callLink.addEventListener('click', event => event.preventDefault());
 }
+function showBookingResult(mode, text = '') {
+  bookingResult.dataset.state = mode;
+  const content = {
+    sending: ['Обрабатываем заявку', 'Пожалуйста, подождите', 'Проверяем доставку сообщения…'],
+    success: ['Заявка принята', 'Спасибо за обращение', 'Заявка отправлена. Наш менеджер с Вами свяжется в ближайшее время.'],
+    failure: ['Не удалось отправить', 'Что-то пошло не так', 'Извините, Ваша заявка не была отправлена. Вы можете связаться с нами.'],
+    uncertain: ['Проверяем статус', 'Пока нет подтверждения', 'Мы пока не смогли подтвердить доставку. Не отправляйте заявку повторно: она могла поступить. Проверьте статус через несколько секунд.']
+  }[mode];
+  $('#booking-result-eyebrow').textContent = content[0];
+  bookingResultTitle.textContent = content[1];
+  $('#booking-result-text').textContent = text || content[2];
+  bookingResultCall.hidden = mode !== 'failure' || !bookingResultCall.href;
+  bookingResultRetry.hidden = mode !== 'failure';
+  bookingResultCheck.hidden = mode !== 'uncertain';
+  bookingResultDone.hidden = mode === 'sending';
+  if (bookingResult.hidden) {
+    bookingForm.classList.add('is-leaving');
+    window.setTimeout(() => {
+      if (!bookingDialog.open) return;
+      bookingForm.hidden = true;
+      bookingResult.hidden = false;
+      bookingResult.classList.add('is-visible');
+      bookingDialog.setAttribute('aria-labelledby', 'booking-result-title');
+      bookingResultTitle.focus();
+    }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 240);
+  }
+}
+bookingResultRetry.addEventListener('click', () => {
+  bookingResult.hidden = true;
+  bookingResult.classList.remove('is-visible');
+  bookingDialog.setAttribute('aria-labelledby', 'booking-title');
+  bookingForm.hidden = false;
+  bookingForm.classList.remove('is-leaving');
+  bookingSent = false;
+  updateBookingValidity();
+  bookingSubmit.focus();
+});
+bookingResultCheck.addEventListener('click', async () => {
+  if (!activeBookingNonce) return;
+  showBookingResult('sending');
+  try {
+    const result = await apiRequest({ action: 'leadStatus', nonce: activeBookingNonce });
+    showBookingResult(result.ok && result.status === 'sent' ? 'success' : 'uncertain');
+  } catch (_) { showBookingResult('uncertain'); }
+});
 bookingForm.addEventListener('submit', event => {
   event.preventDefault();
   if (!updateBookingValidity() || bookingPending || bookingSent || !selectedBooking) return;
   const booking = { ...selectedBooking };
   bookingPending = true;
   updateBookingValidity();
-  $('#booking-status').textContent = 'Отправляем заявку…';
   const nonce = `booking_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  activeBookingNonce = nonce;
+  showBookingResult('sending');
   const transport = document.createElement('form');
   transport.method = 'POST';
   transport.action = config.maintenanceApiUrl;
@@ -239,32 +312,45 @@ bookingForm.addEventListener('submit', event => {
   });
   document.body.append(transport);
   let completed = false;
-  const finish = (message, sent) => {
+  let statusChecks = 0, statusTimer;
+  const finish = (mode, detail = '') => {
     if (completed) return;
     completed = true;
     clearTimeout(timer);
+    clearTimeout(statusTimer);
     window.removeEventListener('message', receive);
     transport.remove();
+    if (activeBookingNonce !== nonce) return;
     bookingPending = false;
-    bookingSent = sent;
-    $('#booking-status').textContent = message;
+    bookingSent = mode !== 'failure';
+    showBookingResult(mode, detail);
     updateBookingValidity();
+  };
+  const pollStatus = async () => {
+    if (completed || activeBookingNonce !== nonce) return;
+    statusChecks++;
+    try {
+      const result = await apiRequest({ action: 'leadStatus', nonce });
+      if (completed) return;
+      if (result.ok && result.status === 'sent') { finish('success'); return; }
+    } catch (_) { /* A missing status response does not prove delivery failed. */ }
+    if (completed) return;
+    if (statusChecks >= 8) finish('uncertain');
+    else statusTimer = window.setTimeout(pollStatus, 4000);
   };
   const receive = event => {
     if (!/^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(event.origin) && event.origin !== 'https://script.google.com') return;
     if (event.data?.source !== 'gts-booking' || event.data.nonce !== nonce) return;
     if (event.data.code === 'PRICE_CHANGED' || event.data.code === 'OFFER_UNAVAILABLE') {
-      finish('Акция изменилась или больше недоступна. Обновите страницу и проверьте стоимость.', false);
-      bookingSent = true;
-      updateBookingValidity();
+      finish('failure', 'Акция изменилась или больше недоступна. Обновите страницу и проверьте стоимость.');
       return;
     }
     const errorCode = /^[A-Z_]{3,40}$/.test(event.data.code) ? event.data.code : 'NO_CODE';
-    finish(event.data.ok ? 'Заявка отправлена. Мы свяжемся с вами.'
-      : `Не удалось отправить заявку. Код: ${errorCode}.${event.data.version ? ` Версия API: ${event.data.version}.` : ''}`, !!event.data.ok);
+    finish(event.data.ok ? 'success' : 'failure', event.data.ok ? ''
+      : `Извините, Ваша заявка не была отправлена. Вы можете связаться с нами. Код: ${errorCode}.`);
   };
   window.addEventListener('message', receive);
-  const timer = setTimeout(() => finish('Не удалось подтвердить отправку. Пожалуйста, свяжитесь с нами по телефону.', false), 20000);
+  const timer = window.setTimeout(pollStatus, 18000);
   transport.submit();
 });
 loadCatalog();
