@@ -1,5 +1,5 @@
 /** Web app bound to the price spreadsheet (Extensions → Apps Script). */
-var GTS_API_VERSION = '2026-09-26.2';
+var GTS_API_VERSION = '2026-09-26.3';
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
@@ -62,7 +62,9 @@ function doPost(e) {
     result.code = 'INVALID_PHONE';
     if (!phone) throw new Error('Invalid phone');
     var messageLines;
-    if (p.kind === 'custom') {
+    if (p.kind === 'callback') {
+      messageLines = ['Заказ обратного звонка', 'Имя: ' + name, 'Телефон: ' + phone];
+    } else if (p.kind === 'custom') {
       result.code = 'INVALID_REQUEST';
       var request = String(p.request || '').trim();
       if (!request || request.length > 1000) throw new Error('Invalid custom request');
