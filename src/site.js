@@ -51,7 +51,28 @@ $('#offers-list').innerHTML = '<p role="status">Загружаем актуал�
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model'), variant = $('#variant'), maintenance = $('#maintenance-type');
 const bookButton = $('#calculator-form button[type="submit"]');
+const customCar = $('#custom-car'), customCarPanel = $('#custom-car-panel'), customCarRequest = $('#custom-car-request');
 let catalog = [], selectedQuote = null, quoteRequest = 0, activeOffers = [], selectedBooking = null;
+function updateCustomBooking() {
+  bookButton.disabled = !customCarRequest.value.trim();
+}
+customCar.addEventListener('change', () => {
+  const custom = customCar.checked;
+  $('#calculator-form').classList.toggle('is-custom', custom);
+  customCarPanel.classList.toggle('is-open', custom);
+  customCarPanel.setAttribute('aria-hidden', String(!custom));
+  customCar.setAttribute('aria-expanded', String(custom));
+  customCarRequest.disabled = !custom;
+  customCarRequest.required = custom;
+  resetQuote();
+  [brand, model, variant, maintenance].forEach(select => {
+    select.disabled = custom || (select === brand ? !catalog.length
+      : select === model ? !brand.value : select === variant ? !model.value : !variant.value);
+  });
+  if (custom) updateCustomBooking();
+  else if (maintenance.value) maintenance.dispatchEvent(new Event('change'));
+});
+customCarRequest.addEventListener('input', updateCustomBooking);
 // Apps Script ContentService redirects JSON to a different origin. Its documented
 // JSONP response lets a static site read public, read-only catalogue data.
 function apiRequest(params) {
@@ -79,14 +100,14 @@ function apiRequest(params) {
 function setOptions(select, placeholder, entries) {
   select.replaceChildren(new Option(placeholder, ''));
   entries.forEach(({ label, value }) => select.add(new Option(label, value)));
-  select.disabled = !entries.length;
+  select.disabled = customCar.checked || !entries.length;
 }
 function resetQuote(message = 'Выберите автомобиль и вид ТО') {
   quoteRequest++;
   selectedQuote = null;
   $('#price').textContent = '—';
   $('#price-note').textContent = message;
-  bookButton.disabled = true;
+  bookButton.disabled = customCar.checked ? !customCarRequest.value.trim() : true;
 }
 async function loadCatalog() {
   if (!config.maintenanceApiUrl) {
@@ -133,7 +154,7 @@ maintenance.addEventListener('change', async () => {
   $('#price-note').textContent = 'Рассчитываем стоимость…';
   try {
     const result = await apiRequest({ action: 'quote', modelId, type });
-    if (request !== quoteRequest) return;
+    if (request !== quoteRequest || customCar.checked) return;
     if (!result.ok || !result.priceId || !Number.isFinite(result.price)) throw new Error('Стоимость не найдена');
     selectedQuote = result;
     $('#price').textContent = money(result.price);
@@ -145,6 +166,12 @@ maintenance.addEventListener('change', async () => {
 });
 $('#calculator-form').addEventListener('submit', event => {
   event.preventDefault();
+  if (customCar.checked) {
+    const request = customCarRequest.value.trim();
+    if (!request || request.length > 1000) return;
+    openBooking({ kind: 'custom', request }, request);
+    return;
+  }
   if (!selectedQuote || selectedQuote.modelId !== variant.value || selectedQuote.type !== maintenance.value) return;
   openBooking({ kind: 'maintenance', modelId: selectedQuote.modelId, type: selectedQuote.type, priceId: selectedQuote.priceId },
     `${brand.value} ${model.value} · ${variant.selectedOptions[0].textContent} · ${maintenance.value} · ${money(selectedQuote.price)}`);
@@ -300,6 +327,8 @@ bookingForm.addEventListener('submit', event => {
   if (booking.kind === 'offer') {
     fields.offerId = booking.offerId;
     fields.expectedPrice = booking.expectedPrice;
+  } else if (booking.kind === 'custom') {
+    fields.request = booking.request;
   } else {
     fields.modelId = booking.modelId;
     fields.type = booking.type;
