@@ -1432,13 +1432,7 @@ select:disabled {
 /* Independent photo albums in the space cards. */
 .space-card > .space-gallery { position: relative; padding: 0; overflow: hidden; border-radius: 4px; }
 .space-slides { touch-action: pan-y pinch-zoom; }
-.space-slides img[hidden], .space-controls[hidden], .photo-count[hidden] { display: none; }
-.space-controls { position: absolute; inset: auto 10px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.space-controls button { cursor: pointer; border: 0; background: #fafaf7; color: #202626; border-radius: 50%; min-width: 44px; height: 44px; font-size: 20px; }
-.photo-dots { display: flex; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 104px); border-radius: 22px; background: #171e1cbf; }
-.photo-dots button { min-width: 30px; width: 30px; height: 44px; background: transparent; display: grid; place-items: center; }
-.photo-dots button::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #ffffff80; }
-.photo-dots button[aria-pressed="true"]::after { background: #fff; width: 10px; height: 10px; }
+.space-slides img[hidden] { display: none; }
 .photo-count { position: absolute; top: 12px; right: 12px; padding: 6px 10px; border-radius: 20px; color: white; background: #171e1ccc; font-size: 12px; }
 
 /* Staff albums: consistent frame, certificates are never cropped. */
@@ -1450,24 +1444,19 @@ select:disabled {
 .team-placeholder[hidden] { display: none; }
 .portrait-placeholder { background: radial-gradient(ellipse at 50% 30%, #f2f3ed, #d3d9ca); }
 .portrait-initials { width: 130px; height: 130px; display: grid; place-items: center; border-radius: 50%; color: #6b775c; background: #ffffff85; font-size: 42px; letter-spacing: -2px; }
-.placeholder-caption { font-size: 12px; color: #58634f; }
 .certificate-placeholder { gap: 12px; background: #e7e9e1; }
 .certificate-sheet { width: 100%; max-width: 220px; flex: 1; min-height: 0; background: #fafaf7; border: 1px solid #bbc5ab; outline: 1px solid #d6ddca; outline-offset: -8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 18px; gap: 15px; }
-.certificate-word { font-size: 13px; letter-spacing: 2px; }
 .certificate-rule { width: 45px; height: 2px; background: #8c9d71; }
 .certificate-dummy { font-size: 23px; letter-spacing: 3px; color: #9fa892; }
 .certificate-lines { width: 75%; height: 20px; border-block: 1px solid #d8ddcf; }
 .certificate-foot { font-size: 11px; color: #707965; }
 @media (max-width: 1100px) { .team-gallery .space-slides { height: 330px; } }
-@media (max-width: 800px) { .team-gallery .space-slides { height: 320px; } .portrait-initials { width: 100px; height: 100px; font-size: 34px; } .certificate-word { font-size: 11px; letter-spacing: 1px; } .certificate-dummy { font-size: 18px; letter-spacing: 1px; } .team-placeholder { padding-inline: 12px; } }
+@media (max-width: 800px) { .team-gallery .space-slides { height: 320px; } .portrait-initials { width: 100px; height: 100px; font-size: 34px; } .certificate-dummy { font-size: 18px; letter-spacing: 1px; } .team-placeholder { padding-inline: 12px; } }
 @media (max-width: 560px) { .team-gallery .space-slides { height: 360px; } }
 
-/* Clickable photo surface; gallery navigation stays above it. */
+/* The photo itself is the zoom target; swipes and dragging navigate the album. */
 .photo-enlarge { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; padding: 0; background: transparent; cursor: zoom-in; touch-action: pan-y pinch-zoom; }
-.photo-enlarge span { position: absolute; left: 12px; top: 12px; padding: 7px 10px; border-radius: 20px; background: #171e1ccc; color: white; font-size: 11px; }
 .photo-enlarge:focus-visible { outline-offset: -4px; }
-.space-controls { z-index: 2; pointer-events: none; }
-.space-controls button, .photo-dots { pointer-events: auto; }
 .photo-count { z-index: 2; pointer-events: none; }
 .photo-viewer { width: min(1100px, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); padding: 0; border: 0; border-radius: 8px; background: #171e1c; color: #fafaf7; }
 .photo-viewer::backdrop { background: #070c0be8; }
@@ -1483,7 +1472,7 @@ select:disabled {
 .viewer-image .portrait-initials { width: 160px; height: 160px; font-size: 52px; }
 .viewer-footer { justify-content: center; gap: 24px; }
 .viewer-counter { min-width: 60px; text-align: center; font-size: 13px; }
-@media (max-width: 560px) { .photo-viewer { width: calc(100% - 12px); max-height: calc(100dvh - 12px); } .viewer-image { height: 60dvh; } .viewer-header { padding: 8px 12px; } .photo-enlarge span { top: auto; bottom: 66px; } }
+@media (max-width: 560px) { .photo-viewer { width: calc(100% - 12px); max-height: calc(100dvh - 12px); } .viewer-image { height: 60dvh; } .viewer-header { padding: 8px 12px; } }
 
 /* Gentle service-card lift without changing the surrounding layout. */
 .service-card {
@@ -1503,8 +1492,6 @@ select:disabled {
   box-shadow: 0 14px 28px -18px #171e1c55;
   z-index: 1;
 }
-.space-controls { justify-content: center; }
-.photo-dots { max-width: 100%; }
 .photo-enlarge { user-select: none; }
 @media (prefers-reduced-motion: reduce) {
   .service-card:hover, .service-card:focus-within { transform: none; }
