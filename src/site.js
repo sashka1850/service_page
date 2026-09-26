@@ -46,7 +46,7 @@ function renderServiceDescription(service) {
   if (service.items) return `<ul>${service.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul>`;
   return `<p>${escape(service.text || '')}</p>`;
 }
-$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden>${renderServiceDescription(s)}<a class="service-action button dark" href="${escape(s.target)}">${escape(s.action)}</a></div></article>`).join('');
+$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden>${renderServiceDescription(s)}${i === 0 ? `<a class="service-action button dark" href="${escape(s.target)}">${escape(s.action)}</a>` : `<button class="service-action button dark" type="button" data-book-callback>${escape(s.action)}</button>`}</div></article>`).join('');
 $('#offers-list').innerHTML = '<p role="status">Загружаем актуальные акции…</p>';
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model'), variant = $('#variant'), maintenance = $('#maintenance-type');
@@ -263,11 +263,11 @@ bookingDialog.addEventListener('close', () => {
   updateBookingValidity();
 });
 const callLink = $('#booking-call');
-if (/^\+[1-9]\d{7,14}$/.test(config.phone)) {
-  callLink.href = `tel:${config.phone}`;
-  bookingResultCall.href = `tel:${config.phone}`;
-  callLink.removeAttribute('aria-disabled');
-  callLink.removeAttribute('tabindex');
+const callTarget = /^\+[1-9]\d{7,14}$/.test(config.phone)
+  ? `tel:${config.phone}` : $('.contacts-info a[href^="tel:"]')?.getAttribute('href');
+if (callTarget) {
+  callLink.href = callTarget;
+  bookingResultCall.href = callTarget;
 } else {
   callLink.hidden = true;
 }
