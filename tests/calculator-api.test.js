@@ -81,6 +81,18 @@ test('invalid consent, phone and price ID never send a lead', () => {
   assert.equal(telegramMessages.length, 0);
 });
 
+test('free-form car request is delivered without a selected price and rejects empty text', () => {
+  const { context, telegramMessages } = makeApi();
+  const form = { action: 'lead', kind: 'custom', nonce: 'booking_123456789030_test',
+    name: 'Анна', phone: '+79991234567', consent: 'yes', request: 'Kia Rio, замена масла' };
+  assert.match(context.doPost({ parameter: { ...form, request: '  ' } }).html, /INVALID_REQUEST/);
+  assert.equal(telegramMessages.length, 0);
+  assert.match(context.doPost({ parameter: form }).html, /"ok":true/);
+  assert.match(telegramMessages[0].body.text, /Kia Rio, замена масла/);
+  context.doPost({ parameter: form });
+  assert.equal(telegramMessages.length, 1);
+});
+
 test('quote resolves ID and numeric price, rejects unconfirmed or ambiguous selections', () => {
   const { context } = makeApi();
   const request = (modelId, type) => JSON.parse(context.doGet({ parameter: { action: 'quote', modelId, type } }).text);
@@ -147,10 +159,10 @@ test('Telegram configuration and delivery errors return diagnostic codes without
 test('version endpoint and rejected lead always expose a safe diagnostic code', () => {
   const { context } = makeApi();
   const version = JSON.parse(context.doGet({ parameter: { action: 'version' } }).text);
-  assert.equal(version.version, '2026-09-26.1');
+  assert.equal(version.version, '2026-09-26.2');
   const html = context.doPost({ parameter: { action: 'lead', nonce: 'booking_123456789020_test' } }).html;
   assert.match(html, /"code":"INVALID_FORM"/);
-  assert.match(html, /"version":"2026-09-26.1"/);
+  assert.match(html, /"version":"2026-09-26.2"/);
 });
 
 test('lead status confirms delivery by nonce without exposing customer details', () => {
