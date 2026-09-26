@@ -2,7 +2,14 @@ import { config, prices, services, offers, team, getPrice, spaceAlbums } from '.
 const $ = (selector) => document.querySelector(selector);
 const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden><p>${escape(s.text)}</p><button class="service-action button light-button" type="button">${escape(s.action)}</button></div></article>`).join('');
+function renderServiceDescription(service) {
+  if (service.columns) {
+    return `<div class="service-columns">${service.columns.map(column => `<div><h4>${escape(column.title)}</h4><ul>${column.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul></div>`).join('')}</div>`;
+  }
+  if (service.items) return `<ul>${service.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul>`;
+  return `<p>${escape(service.text || '')}</p>`;
+}
+$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden>${renderServiceDescription(s)}<button class="service-action button light-button" type="button">${escape(s.action)}</button></div></article>`).join('');
 $('#offers-list').innerHTML = offers.map((s, i) => `<article class="offer-card"><span class="card-number">0${i + 1} /</span><h3>${escape(s.title)}</h3><strong>${money(s.price)}</strong><ul>${s.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="service-action button light-button" type="button">Записаться</button></article>`).join('');
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model');
