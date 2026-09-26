@@ -583,6 +583,28 @@ h1 {
   gap:16px;
 }
 
+.calculator-extra {
+  margin-top:16px;
+}
+
+.calculator-card label {
+  position:relative;
+}
+
+.calculator-card label:focus-within::before {
+  content:'';
+  position:absolute;
+  left:-7px;
+  top:0;
+  bottom:0;
+  width:2px;
+  background:var(--ink);
+}
+
+.calculator-card select:focus-visible {
+  outline:none;
+}
+
 .visually-hidden {
   position:absolute;
   width:1px;
