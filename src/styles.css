@@ -695,6 +695,19 @@ select:disabled {
   width:100%;
 }
 
+.calculator-card .button:disabled {
+  background:#d8dbd4;
+  border-color:#d8dbd4;
+  color:#747a74;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.calculator-card .button:disabled:hover {
+  background:#d8dbd4;
+  transform:none;
+}
+
 .form-note {
   font-size:11px;
   color:var(--muted);
