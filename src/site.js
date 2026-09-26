@@ -13,7 +13,7 @@ const config = {
   maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
 };
 const services = [
-  { title: 'Техническое обслуживание', items: ['Все расходные материалы в наличии.', 'Не просто замена масла, а полноценное ТО по регламенту производителя.', 'Работы выполняются сертифицированными специалистами.', 'Комфортная клиентская зона.'], action: 'Записаться', target: '#contacts', icon: '01' },
+  { title: 'Техническое обслуживание', items: ['Все расходные материалы в наличии.', 'Не просто замена масла, а полноценное ТО по регламенту производителя.', 'Работы выполняются сертифицированными специалистами.', 'Комфортная клиентская зона.'], action: 'Записаться', target: '#calculator', icon: '01' },
   { title: 'Ремонт автомобилей', items: ['Качественный ремонт любой сложности (включая ремонт агрегатов).', 'Оригинальные запасные части.', 'Гарантия на выполнение ремонта.', 'Все работы под контролем технического эксперта Hyundai.'], action: 'Записаться', target: '#contacts', icon: '02' },
   { title: 'Диагностика', items: ['Выполняем диагностику любой сложности.', 'Поиск и устранение любой неисправности.', 'Имеем всё необходимое оборудование для качественной диагностики.'], action: 'Записаться', target: '#contacts', icon: '03' },
   { title: 'Детейлинг и тюнинг', columns: [{ title: 'Детейлинг', items: ['Полировка кузова.', 'Химчистка салона.', 'Обработка кузова.'] }, { title: 'Тюнинг', items: ['Тонировка стекол/фар.', 'Оклейка кузова пленкой.', 'Доработка ЭБУ (Чип-тюнинг).'] }], action: 'Записаться', target: '#contacts', icon: '04' },
@@ -46,7 +46,7 @@ function renderServiceDescription(service) {
   if (service.items) return `<ul>${service.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul>`;
   return `<p>${escape(service.text || '')}</p>`;
 }
-$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden>${renderServiceDescription(s)}<button class="service-action button light-button" type="button">${escape(s.action)}</button></div></article>`).join('');
+$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden>${renderServiceDescription(s)}<a class="service-action button dark" href="${escape(s.target)}">${escape(s.action)}</a></div></article>`).join('');
 $('#offers-list').innerHTML = '<p role="status">Загружаем актуальные акции…</p>';
 $('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model'), variant = $('#variant'), maintenance = $('#maintenance-type');
@@ -199,7 +199,7 @@ async function loadOffers() {
     if (!result.ok || !Array.isArray(result.offers)) throw new Error('Не удалось загрузить акции');
     activeOffers = result.offers;
     $('#offers-list').innerHTML = activeOffers.length ? activeOffers.map((offer, index) =>
-      `<article class="offer-card"><span class="card-number">${String(index + 1).padStart(2, '0')} /</span><h3>${escape(offer.title)}</h3><strong>${money(offer.price)}</strong><ul>${offer.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="button light-button" type="button" data-offer-id="${escape(offer.offerId)}">Записаться по акции</button></article>`
+      `<article class="offer-card"><span class="card-number">${String(index + 1).padStart(2, '0')} /</span><h3>${escape(offer.title)}</h3><strong>${money(offer.price)}</strong><ul>${offer.items.map(item => `<li>${escape(item)}</li>`).join('')}</ul><button class="button dark" type="button" data-offer-id="${escape(offer.offerId)}">Записаться</button></article>`
     ).join('') : '<p role="status">Сейчас нет действующих акций.</p>';
   } catch (error) {
     $('#offers-list').innerHTML = '<p role="status">Не удалось загрузить акции. Обновите страницу позже.</p>';
