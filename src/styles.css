@@ -1102,7 +1102,6 @@ select:disabled {
     background:#171e1c;
     transform:scaleX(0);
     transform-origin:left center;
-    transition:transform .16s linear;
   }
   .offer-card h3 {
     min-height:0;
