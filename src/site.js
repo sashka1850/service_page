@@ -644,16 +644,14 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
   gallery.setAttribute('role', 'region');
   gallery.setAttribute('aria-label', `Фотоальбом: ${card.querySelector('h3').textContent}`);
   original.replaceWith(gallery);
-  gallery.innerHTML = `<div class="space-slides"></div><div class="space-controls"><div class="photo-dots" role="group" aria-label="Выбор фотографии"></div></div><div class="photo-count" aria-live="polite" aria-atomic="true"></div>`;
+  gallery.innerHTML = `<div class="space-slides"></div><div class="photo-count" aria-live="polite" aria-atomic="true"></div>`;
   const slides = gallery.querySelector('.space-slides');
-  const dots = gallery.querySelector('.photo-dots');
   let current = 0;
   let suppressOpenUntil = 0;
   const zoomButton = document.createElement('button');
   zoomButton.type = 'button'; zoomButton.className = 'photo-enlarge';
   zoomButton.setAttribute('aria-label', 'Увеличить фото');
   zoomButton.setAttribute('aria-haspopup', 'dialog');
-  zoomButton.innerHTML = '<span>Увеличить</span>';
   gallery.append(zoomButton);
   zoomButton.addEventListener('click', () => {
     if (Date.now() < suppressOpenUntil) return;
@@ -668,13 +666,10 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
       img.className = `team-placeholder ${photo.kind === 'certificate' ? 'certificate-placeholder' : 'portrait-placeholder'}`;
       img.setAttribute('role', 'img'); img.setAttribute('aria-label', photo.alt);
       img.innerHTML = photo.kind === 'certificate'
-        ? '<div class="certificate-sheet"><div class="certificate-word">СЕРТИФИКАТ</div><div class="certificate-rule"></div><div class="certificate-dummy">ОБРАЗЕЦ</div><div class="certificate-lines"></div><div class="certificate-foot">Место для документа</div></div><div class="placeholder-caption">Сертификат · заглушка</div>'
-        : '<div class="portrait-initials" aria-hidden="true">' + escape(card.querySelector('h3').textContent.split(' ').map(word => word[0]).join('')) + '</div><div class="placeholder-caption">Портрет · заглушка</div>';
+        ? '<div class="certificate-sheet"><div class="certificate-rule"></div><div class="certificate-dummy">ОБРАЗЕЦ</div><div class="certificate-lines"></div><div class="certificate-foot">Место для документа</div></div>'
+        : '<div class="portrait-initials" aria-hidden="true">' + escape(card.querySelector('h3').textContent.split(' ').map(word => word[0]).join('')) + '</div>';
     }
     img.hidden = index !== 0; slides.append(img);
-    const dot = document.createElement('button');
-    dot.type = 'button'; dot.setAttribute('aria-label', `Фото ${index + 1}: ${photo.alt}`);
-    dot.addEventListener('click', () => show(index)); dots.append(dot);
     return img;
   });
   let slideAnimations = [];
@@ -706,9 +701,8 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
         slideAnimations = [];
       });
     }
-    [...dots.children].forEach((dot, i) => dot.setAttribute('aria-pressed', String(i === current)));
     zoomButton.setAttribute('aria-label', `Увеличить: ${photos[current].alt}`);
-    gallery.querySelector('.photo-count').textContent = `${isTeam ? (photos[current].kind === 'certificate' ? 'Сертификат · ' : 'Портрет · ') : ''}${current + 1} / ${photos.length}`;
+    gallery.querySelector('.photo-count').textContent = `${current + 1} / ${photos.length}`;
   }
   gallery.addEventListener('keydown', event => {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -746,8 +740,6 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
     if (zoomButton.hasPointerCapture(event.pointerId)) zoomButton.releasePointerCapture(event.pointerId);
   });
   zoomButton.addEventListener('pointercancel', () => { mouseStart = null; });
-  gallery.querySelector('.space-controls').hidden = photos.length < 2;
-  gallery.querySelector('.photo-count').hidden = photos.length < 2;
   show(0);
 });
 
