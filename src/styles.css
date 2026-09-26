@@ -605,6 +605,29 @@ h1 {
   outline:none;
 }
 
+.calculator-card .custom-car-choice {
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:10px;
+  margin-top:20px;
+  font-size:14px;
+  cursor:pointer;
+}
+
+.calculator-card .custom-car-choice::before { display:none; }
+.custom-car-choice input { width:18px; height:18px; margin:0; accent-color:var(--ink); cursor:pointer; }
+.custom-car-panel { display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .32s ease,opacity .32s ease; }
+.custom-car-panel.is-open { grid-template-rows:1fr; opacity:1; }
+.custom-car-panel-inner { min-height:0; overflow:hidden; }
+.custom-car-field { display:block; margin-top:0; }
+.custom-car-panel.is-open .custom-car-field { margin-top:16px; }
+.custom-car-field textarea { box-sizing:border-box; display:block; width:100%; height:112px; resize:vertical; padding:14px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); font:inherit; font-size:14px; line-height:1.5; }
+.custom-car-field textarea:focus-visible { outline:none; }
+.calculator-card.is-custom .form-row { opacity:.45; }
+.calculator-card.is-custom .price-result { display:none; }
+@media(prefers-reduced-motion:reduce) { .custom-car-panel { transition:none; } }
+
 .visually-hidden {
   position:absolute;
   width:1px;
