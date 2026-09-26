@@ -1079,10 +1079,12 @@ select:disabled {
   .mobile-card-scroll > .offer-card,
   .mobile-card-scroll > .space-card,
   .mobile-card-scroll > .team-card {
+    opacity:var(--scroll-card-opacity,.6);
     scroll-snap-align:start;
     scroll-snap-stop:always;
-    flex:0 0 calc(95% - 16px);
-    max-width:calc(95% - 16px);
+    flex:0 0 calc(93% - 16px);
+    max-width:calc(93% - 16px);
+    transition:opacity .18s linear;
   }
   .mobile-scroll-progress {
     display:block;
