@@ -1458,6 +1458,12 @@ select:disabled {
 .photo-enlarge { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; padding: 0; background: transparent; cursor: zoom-in; touch-action: pan-y pinch-zoom; }
 .photo-enlarge:focus-visible { outline-offset: -4px; }
 .photo-count { z-index: 2; pointer-events: none; }
+.gallery-arrow { position:absolute; z-index:3; top:50%; width:44px; height:52px; display:grid; place-items:center; padding:0; border:0; border-radius:3px; background:#171e1c55; color:#fff; cursor:pointer; transform:translateY(-50%); touch-action:manipulation; transition:background .2s ease; }
+.gallery-arrow[hidden] { display:none; }
+.gallery-arrow:hover,.gallery-arrow:focus-visible { background:#171e1caa; }
+.gallery-arrow-prev { left:8px; }
+.gallery-arrow-next { right:8px; }
+.gallery-arrow svg { width:16px; height:20px; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
 .photo-viewer { width: min(1100px, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); padding: 0; border: 0; border-radius: 8px; background: #171e1c; color: #fafaf7; }
 .photo-viewer::backdrop { background: #070c0be8; }
 .viewer-shell { display: flex; flex-direction: column; }
