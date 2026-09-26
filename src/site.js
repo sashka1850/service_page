@@ -152,9 +152,9 @@ function setupRevealAnimations() {
     { root: $('.hero'), items: ['.eyebrow', 'h1', '.hero-description', '.actions .button', '.hero-bottom'] },
     { root: $('#services'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.service-card'] },
     { root: $('#calculator'), items: ['.eyebrow', 'h2', '.section-description', '.fine-print', '.calculator-card'] },
-    { root: $('#offers'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.offer-card', '.fine-print'] },
-    { root: $('#space'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.space-card'] },
-    { root: $('#team'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.team-card'] },
+    { root: $('#offers'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p', '.fine-print'] },
+    { root: $('#space'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p'] },
+    { root: $('#team'), items: ['.section-heading .eyebrow', '.section-heading h2', '.section-heading > p'] },
   ].filter(block => block.root);
 
   document.documentElement.classList.add('animate-ready');
@@ -214,6 +214,15 @@ function setupMobileCardProgress() {
       const total = Math.max(scroller.scrollWidth, 1);
       const value = scroller.scrollWidth <= scroller.clientWidth ? 1 : Math.min((scroller.scrollLeft + scroller.clientWidth) / total, 1);
       bar.style.transform = `scaleX(${Number.isFinite(value) ? value : 0})`;
+      const scrollerRect = scroller.getBoundingClientRect();
+      const activePoint = scrollerRect.left;
+      [...scroller.children].forEach((card) => {
+        const cardRect = card.getBoundingClientRect();
+        const distance = Math.abs(cardRect.left - activePoint);
+        const fadeRange = Math.max(cardRect.width * .55, 1);
+        const opacity = Math.max(.6, 1 - (distance / fadeRange) * .4);
+        card.style.setProperty('--scroll-card-opacity', opacity.toFixed(3));
+      });
     };
     scroller.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
