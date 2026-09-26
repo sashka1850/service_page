@@ -161,7 +161,9 @@ function setupMobileCardProgress() {
     progress.innerHTML = '<span></span>';
     section.append(progress);
     const bar = progress.querySelector('span');
+    let frame = 0;
     const update = () => {
+      frame = 0;
       const total = Math.max(scroller.scrollWidth, 1);
       const value = scroller.scrollWidth <= scroller.clientWidth ? 1 : Math.min((scroller.scrollLeft + scroller.clientWidth) / total, 1);
       bar.style.transform = `scaleX(${Number.isFinite(value) ? value : 0})`;
@@ -175,8 +177,13 @@ function setupMobileCardProgress() {
         card.style.setProperty('--scroll-card-opacity', opacity.toFixed(3));
       });
     };
-    scroller.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
+    const scheduleUpdate = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(update);
+    };
+    scroller.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    new MutationObserver(scheduleUpdate).observe(scroller, { childList:true });
     update();
   });
 }
