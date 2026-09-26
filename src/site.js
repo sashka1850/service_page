@@ -193,6 +193,14 @@ function openBooking(selection, summary) {
   $('#booking-dialog').showModal();
   $('#booking-name').focus();
 }
+document.querySelectorAll('[data-book-callback]').forEach(button => button.addEventListener('click', () => {
+  const widget = button.closest('.contact-widget');
+  if (widget) {
+    widget.classList.remove('is-open');
+    widget.querySelector('.contact-widget-toggle').setAttribute('aria-expanded', 'false');
+  }
+  openBooking({ kind: 'callback' }, 'Заказ обратного звонка');
+}));
 async function loadOffers() {
   try {
     const result = await apiRequest({ action: 'offers' });
@@ -329,7 +337,7 @@ bookingForm.addEventListener('submit', event => {
     fields.expectedPrice = booking.expectedPrice;
   } else if (booking.kind === 'custom') {
     fields.request = booking.request;
-  } else {
+  } else if (booking.kind === 'maintenance') {
     fields.modelId = booking.modelId;
     fields.type = booking.type;
     fields.priceId = booking.priceId;
