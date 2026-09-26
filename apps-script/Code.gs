@@ -1,5 +1,5 @@
 /** Web app bound to the price spreadsheet (Extensions → Apps Script). */
-var GTS_API_VERSION = '2026-09-26.1';
+var GTS_API_VERSION = '2026-09-26.2';
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
@@ -62,7 +62,13 @@ function doPost(e) {
     result.code = 'INVALID_PHONE';
     if (!phone) throw new Error('Invalid phone');
     var messageLines;
-    if (p.kind === 'offer') {
+    if (p.kind === 'custom') {
+      result.code = 'INVALID_REQUEST';
+      var request = String(p.request || '').trim();
+      if (!request || request.length > 1000) throw new Error('Invalid custom request');
+      messageLines = ['Новая заявка: автомобиля нет в списке', 'Имя: ' + name,
+        'Телефон: ' + phone, 'Запрос: ' + request];
+    } else if (p.kind === 'offer') {
       // For a lead, read the sheet again: disabling an offer must take effect
       // immediately even if the public card list is still cached.
       result.code = 'OFFER_READ_FAILED';
