@@ -618,7 +618,7 @@ h1 {
 .calculator-card .custom-car-choice::before { display:none; }
 .custom-car-choice input { width:18px; height:18px; margin:0; accent-color:var(--ink); cursor:pointer; }
 .custom-car-panel { display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .32s ease,opacity .32s ease; }
-.custom-car-panel.is-open { grid-template-rows:1fr; opacity:1; }
+.custom-car-panel.is-open { grid-template-rows:1fr; opacity:1; margin-bottom:20px; }
 .custom-car-panel-inner { min-height:0; overflow:hidden; }
 .custom-car-field { display:block; margin-top:0; }
 .custom-car-panel.is-open .custom-car-field { margin-top:16px; }
