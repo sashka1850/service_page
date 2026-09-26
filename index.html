@@ -6,9 +6,9 @@
   <meta name="description" content="Genesis Team Service — ремонт и обслуживание Hyundai, Kia и Genesis в Нижнем Новгороде. Техническое обслуживание, диагностика и ремонт.">
   <meta name="theme-color" content="#161b1b">
   <title>GTS — сервис Hyundai, Kia и Genesis в Нижнем Новгороде</title>
-  <link rel="stylesheet" href="./src/styles.css?v=calculator-20260926-focus">
+  <link rel="stylesheet" href="./src/styles.css?v=custom-booking-20260926">
   <link rel="stylesheet" href="./src/contact-map.css">
-  <script defer src="./src/site.js?v=calculator-20260926"></script>
+  <script defer src="./src/site.js?v=custom-booking-20260926"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -44,6 +44,8 @@
           <h3>Калькулятор ТО</h3>
           <div class="form-row"><label><span class="visually-hidden">Марка</span><select id="brand" required disabled><option value="">Загрузка марок…</option></select></label><label><span class="visually-hidden">Модель</span><select id="model" required disabled><option value="">Выберите модель</option></select></label></div>
           <div class="form-row calculator-extra"><label><span class="visually-hidden">Комплектация</span><select id="variant" required disabled><option value="">Выберите комплектацию</option></select></label><label><span class="visually-hidden">Вид ТО</span><select id="maintenance-type" required disabled><option value="">Выбрать ТО</option></select></label></div>
+          <label class="custom-car-choice"><input id="custom-car" type="checkbox" aria-controls="custom-car-panel" aria-expanded="false"><span>Моего автомобиля нет в списке</span></label>
+          <div id="custom-car-panel" class="custom-car-panel" aria-hidden="true"><div class="custom-car-panel-inner"><label class="custom-car-field"><span class="visually-hidden">Модель автомобиля и желаемое обслуживание</span><textarea id="custom-car-request" maxlength="1000" placeholder="Введите модель авто и желаемое обслуживание" disabled></textarea></label></div></div>
           <div class="price-result" aria-live="polite" aria-atomic="true"><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
           <button class="button dark" type="submit" disabled>Записаться</button>
         </form>
