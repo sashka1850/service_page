@@ -928,36 +928,10 @@ select:disabled {
   box-shadow:0 18px 38px rgba(0,0,0,.28);
 }
 
-.contact-widget-toggle span {
-  position:relative;
-  width:31px;
-  height:23px;
-  border:2px solid #fff;
-  border-radius:15px;
-}
-
-.contact-widget-toggle span::before {
-  content:'';
-  position:absolute;
-  left:6px;
-  bottom:-7px;
-  width:10px;
-  height:10px;
-  border-left:2px solid #fff;
-  border-bottom:2px solid #fff;
-  transform:skew(-24deg) rotate(-8deg);
-}
-
-.contact-widget-toggle span::after {
-  content:'';
-  position:absolute;
-  left:8px;
-  top:9px;
-  width:15px;
-  height:2px;
-  border-radius:2px;
-  background:#fff;
-  box-shadow:0 -5px 0 #fff,0 5px 0 #fff;
+.contact-widget-toggle svg {
+  width:35px;
+  height:32px;
+  display:block;
 }
 
 .contact-widget-list {
