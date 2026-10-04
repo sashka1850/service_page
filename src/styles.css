@@ -186,7 +186,7 @@ p {
   justify-content:center;
   gap:26px;
   flex:1;
-  font-size:13px;
+  font-size:26px;
 }
 
 .header nav a:hover {
@@ -1141,7 +1141,7 @@ select:disabled {
   .header nav a {
     padding:18px 0;
     border-top:1px solid var(--line);
-    font-size:18px;
+    font-size:36px;
   }
   .section {
     padding-block:64px;
