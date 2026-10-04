@@ -40,7 +40,7 @@ customCarRequest.addEventListener('input', updateCustomBooking);
 // JSONP response lets a static site read public, read-only catalogue data.
 function apiRequest(params) {
   return new Promise((resolve, reject) => {
-    const callback = `__gtsToCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const callback = `__sctToCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const url = new URL(config.maintenanceApiUrl);
     Object.entries({ ...params, callback }).forEach(([key, value]) => url.searchParams.set(key, value));
     const script = document.createElement('script');
@@ -339,7 +339,7 @@ bookingForm.addEventListener('submit', event => {
   };
   const receive = event => {
     if (!/^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(event.origin) && event.origin !== 'https://script.google.com') return;
-    if (event.data?.source !== 'gts-booking' || event.data.nonce !== nonce) return;
+    if (event.data?.source !== 'sct-booking' || event.data.nonce !== nonce) return;
     if (event.data.code === 'PRICE_CHANGED' || event.data.code === 'OFFER_UNAVAILABLE') {
       finish('failure', 'Акция изменилась или больше недоступна. Обновите страницу и проверьте стоимость.');
       return;
