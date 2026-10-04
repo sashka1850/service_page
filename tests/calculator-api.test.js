@@ -5,6 +5,15 @@ import vm from 'node:vm';
 
 function makeApi() {
   const tables = {
+    Работы: [
+      ['work_id', 'Наименование', 'Седан, нч', 'Кроссовер, нч', 'Внедорожник, нч'],
+      ['W001', 'Фильтр воздушный - с/у', 0.2, 0.3, 0.4],
+      ['W002', 'Стойка стабилизатора - с/у', 0.6, 0.7, 0.8],
+    ],
+    Настройки: [
+      ['Стоимость нормочаса, ₽/нч', 2500], ['Подсказка поиска', 'Введите название запасной части'],
+      ['sedan', 'Седан'], ['crossover', 'Кроссовер'], ['suv', 'Внедорожник'],
+    ],
     Лист1: [
       ['model_id', 'марка', 'модель', 'вариант_из_источника'],
       ['M001', 'Hyundai', 'Solaris', 'Solaris 1.4'],
@@ -173,10 +182,10 @@ test('Telegram configuration and delivery errors return diagnostic codes without
 test('version endpoint and rejected lead always expose a safe diagnostic code', () => {
   const { context } = makeApi();
   const version = JSON.parse(context.doGet({ parameter: { action: 'version' } }).text);
-  assert.equal(version.version, '2026-09-26.3');
+  assert.equal(version.version, '2026-10-04.1');
   const html = context.doPost({ parameter: { action: 'lead', nonce: 'booking_123456789020_test' } }).html;
   assert.match(html, /"code":"INVALID_FORM"/);
-  assert.match(html, /"version":"2026-09-26.3"/);
+  assert.match(html, /"version":"2026-10-04.1"/);
 });
 
 test('lead status confirms delivery by nonce without exposing customer details', () => {
@@ -190,4 +199,38 @@ test('lead status confirms delivery by nonce without exposing customer details',
   const result = status(nonce);
   assert.equal(result.status, 'sent');
   assert.equal(JSON.stringify(result).includes('Анна'), false);
+});
+
+test('repair catalogue calculates all class prices from hours and separate rate', () => {
+  const { context, tables } = makeApi();
+  const get = () => JSON.parse(context.doGet({ parameter: { action: 'repairCatalog' } }).text);
+  assert.deepEqual(get().works[0].prices, { sedan: 500, crossover: 750, suv: 1000 });
+  tables.Настройки[0][1] = '3 000,50';
+  assert.equal(get().works[0].prices.suv, 1200.2);
+  tables.Работы[1][2] = '';
+  assert.equal(Object.hasOwn(get().works[0].prices, 'sedan'), false);
+  tables.Работы[1][2] = 0;
+  assert.equal(get().works[0].prices.sedan, 0);
+});
+
+test('repair catalogue rejects missing rate, duplicate ids and spreadsheet errors', () => {
+  for (const mutate of [t => { t.Настройки[0][1] = ''; }, t => { t.Работы[2][0] = 'W001'; }, t => { t.Работы[1][2] = '#REF!'; }]) {
+    const { context, tables } = makeApi(); mutate(tables);
+    assert.equal(JSON.parse(context.doGet({ parameter: { action: 'repairCatalog' } }).text).ok, false);
+  }
+});
+
+test('repair booking rechecks current price and sends authoritative work and class', () => {
+  const { context, tables, telegramMessages } = makeApi();
+  const form = { action: 'lead', kind: 'repair', nonce: 'booking_123456789000_repair', name: 'Анна', phone: '+79991234567', consent: 'yes', workId: 'W001', classId: 'crossover', expectedPrice: '750' };
+  const post = (overrides = {}) => context.doPost({ parameter: { ...form, ...overrides } }).html;
+  assert.match(post({ classId: '__proto__' }), /REPAIR_UNAVAILABLE/);
+  assert.match(post({ workId: 'missing' }), /REPAIR_UNAVAILABLE/);
+  tables.Настройки[0][1] = 3000;
+  assert.match(post(), /PRICE_CHANGED/);
+  assert.equal(telegramMessages.length, 0);
+  assert.match(post({ expectedPrice: '900' }), /"ok":true/);
+  assert.match(telegramMessages[0].body.text, /Кроссовер/);
+  assert.match(telegramMessages[0].body.text, /900 ₽/);
+  assert.match(telegramMessages[0].body.text, /Фильтр воздушный/);
 });

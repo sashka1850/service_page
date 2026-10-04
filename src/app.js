@@ -1,4 +1,5 @@
 import { config, services, team, spaceAlbums } from './data.js';
+import { initRepairCalculator } from './repair.js';
 const $ = (selector) => document.querySelector(selector);
 const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -298,6 +299,10 @@ bookingForm.addEventListener('submit', event => {
   if (booking.kind === 'offer') {
     fields.offerId = booking.offerId;
     fields.expectedPrice = booking.expectedPrice;
+  } else if (booking.kind === 'repair') {
+    fields.workId = booking.workId;
+    fields.classId = booking.classId;
+    fields.expectedPrice = booking.expectedPrice;
   } else if (booking.kind === 'custom') {
     fields.request = booking.request;
   } else if (booking.kind === 'maintenance') {
@@ -340,8 +345,8 @@ bookingForm.addEventListener('submit', event => {
   const receive = event => {
     if (!/^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(event.origin) && event.origin !== 'https://script.google.com') return;
     if (event.data?.source !== 'sct-booking' || event.data.nonce !== nonce) return;
-    if (event.data.code === 'PRICE_CHANGED' || event.data.code === 'OFFER_UNAVAILABLE') {
-      finish('failure', 'Акция изменилась или больше недоступна. Обновите страницу и проверьте стоимость.');
+    if (['PRICE_CHANGED', 'OFFER_UNAVAILABLE', 'REPAIR_UNAVAILABLE'].includes(event.data.code)) {
+      finish('failure', 'Стоимость или доступность услуги изменилась. Обновите страницу и выполните расчет заново.');
       return;
     }
     const errorCode = /^[A-Z_]{3,40}$/.test(event.data.code) ? event.data.code : 'NO_CODE';
@@ -354,6 +359,7 @@ bookingForm.addEventListener('submit', event => {
 });
 loadCatalog();
 loadOffers();
+initRepairCalculator({ apiRequest, openBooking, money });
 const serviceCards = [...document.querySelectorAll('.service-card')];
 function closeServiceCard(card) {
   const button = card.querySelector('.service-toggle');

@@ -39,9 +39,14 @@
     </section>
     <section id="calculator" class="calculator-section">
       <div class="container calculator-layout">
-        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Выберите автомобиль и вид ТО, чтобы узнать стоимость обслуживания.</p></div>
-        <form id="calculator-form" class="calculator-card">
-          <h3>Калькулятор ТО</h3>
+        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Рассчитайте стоимость ТО или выберите класс автомобиля и ремонтную работу.</p></div>
+        <div class="calculator-card">
+          <div class="calculator-tabs" role="tablist" aria-label="Тип расчета">
+            <button type="button" id="maintenance-tab" role="tab" aria-controls="maintenance-panel" aria-selected="true">Расчет ТО</button>
+            <button type="button" id="repair-tab" role="tab" aria-controls="repair-panel" aria-selected="false" tabindex="-1">Расчет ремонта</button>
+          </div>
+          <div id="maintenance-panel" role="tabpanel" aria-labelledby="maintenance-tab">
+        <form id="calculator-form">
           <div class="form-row"><label><span class="visually-hidden">Марка</span><select id="brand" required disabled><option value="">Загрузка марок…</option></select></label><label><span class="visually-hidden">Модель</span><select id="model" required disabled><option value="">Выберите модель</option></select></label></div>
           <div class="form-row calculator-extra"><label><span class="visually-hidden">Комплектация</span><select id="variant" required disabled><option value="">Выберите комплектацию</option></select></label><label><span class="visually-hidden">Вид ТО</span><select id="maintenance-type" required disabled><option value="">Выбрать ТО</option></select></label></div>
           <label class="custom-car-choice"><input id="custom-car" type="checkbox" aria-controls="custom-car-panel" aria-expanded="false"><span>Моего автомобиля нет в списке</span></label>
@@ -49,6 +54,25 @@
           <div class="price-result" aria-live="polite" aria-atomic="true"><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
           <button class="button dark" type="submit" disabled>Записаться</button>
         </form>
+          </div>
+          <div id="repair-panel" role="tabpanel" aria-labelledby="repair-tab" hidden>
+            <form id="repair-form">
+              <div class="form-row">
+                <label><span class="visually-hidden">Класс авто</span><select id="repair-class" required disabled><option value="">Выберите класс авто</option></select></label>
+                <div class="repair-combobox">
+                  <label for="repair-work" class="visually-hidden">Работа</label>
+                  <input id="repair-work" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="repair-options" aria-describedby="repair-hint" autocomplete="off" placeholder="Выберите работу" disabled>
+                  <ul id="repair-options" role="listbox" aria-label="Работы" hidden></ul>
+                </div>
+              </div>
+              <p id="repair-hint" class="repair-hint">Введите название запасной части (например: колодки тормозные / стойка стабилизатора / фильтр воздушный).</p>
+              <p id="repair-status" role="status" aria-live="polite" class="repair-hint"></p>
+              <button type="button" id="repair-retry" class="repair-retry" hidden>Повторить загрузку</button>
+              <div class="price-result" aria-live="polite" aria-atomic="true"><span>Стоимость работ</span><strong id="repair-price">—</strong><small id="repair-note">Выберите класс автомобиля и работу</small></div>
+              <button id="repair-book" class="button dark" type="submit" disabled>Записаться</button>
+            </form>
+          </div>
+        </div>
       </div>
     </section>
     <section id="offers" class="section container">
