@@ -1,5 +1,5 @@
 /** Web app bound to the price spreadsheet (Extensions → Apps Script). */
-var SCT_API_VERSION = '2026-10-04.1';
+var SCT_API_VERSION = '2026-10-04.2';
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
