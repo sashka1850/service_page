@@ -13,7 +13,7 @@
 <body>
   <a class="skip-link" href="#main">Перейти к содержимому</a>
   <header class="header">
-    <a class="logo" href="#" aria-label="Service Car Team — главная">SCT<span>SERVICE<br>CAR TEAM</span></a>
+    <a class="logo" href="#" aria-label="Service Car Team — главная">SCT<span>SERVICE<br>CAR TEAM</span><svg class="brand-mark" viewBox="0 0 96 42" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="32" cy="15" rx="17" ry="9"/><path d="M22 21l11-13M34 22l10-14M25 18c7-8 13-8 20-3"/><path d="M8 30c14-2 25-2 34 5M8 30c11 7 22 9 34 5M88 30c-14-2-25-2-34 5M88 30c-11 7-22 9-34 5"/><path d="M48 27l13 6-13 7-13-7 13-6z"/><path d="M43 33h10"/></g></svg></a>
     <button class="menu-toggle" aria-expanded="false" aria-controls="navigation" aria-label="Открыть меню"><span></span><span></span><span></span></button>
     <nav id="navigation" aria-label="Основная навигация">
       <a href="#services">Услуги</a><a href="#calculator">Стоимость ТО</a><a href="#space">О сервисе</a><a href="#team">Команда</a><a href="#contacts">Контакты</a>
@@ -39,14 +39,9 @@
     </section>
     <section id="calculator" class="calculator-section">
       <div class="container calculator-layout">
-        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Рассчитайте стоимость ТО или выберите класс автомобиля и ремонтную работу.</p></div>
-        <div class="calculator-card">
-          <div class="calculator-tabs" role="tablist" aria-label="Тип расчета">
-            <button type="button" id="maintenance-tab" role="tab" aria-controls="maintenance-panel" aria-selected="true">Расчет ТО</button>
-            <button type="button" id="repair-tab" role="tab" aria-controls="repair-panel" aria-selected="false" tabindex="-1">Расчет ремонта</button>
-          </div>
-          <div id="maintenance-panel" role="tabpanel" aria-labelledby="maintenance-tab">
-        <form id="calculator-form">
+        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните<br>с понятной цены.</h2><p class="section-description">Выберите автомобиль и вид ТО, чтобы узнать стоимость обслуживания.</p></div>
+        <form id="calculator-form" class="calculator-card">
+          <h3>Калькулятор ТО</h3>
           <div class="form-row"><label><span class="visually-hidden">Марка</span><select id="brand" required disabled><option value="">Загрузка марок…</option></select></label><label><span class="visually-hidden">Модель</span><select id="model" required disabled><option value="">Выберите модель</option></select></label></div>
           <div class="form-row calculator-extra"><label><span class="visually-hidden">Комплектация</span><select id="variant" required disabled><option value="">Выберите комплектацию</option></select></label><label><span class="visually-hidden">Вид ТО</span><select id="maintenance-type" required disabled><option value="">Выбрать ТО</option></select></label></div>
           <label class="custom-car-choice"><input id="custom-car" type="checkbox" aria-controls="custom-car-panel" aria-expanded="false"><span>Моего автомобиля нет в списке</span></label>
@@ -54,25 +49,6 @@
           <div class="price-result" aria-live="polite" aria-atomic="true"><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
           <button class="button dark" type="submit" disabled>Записаться</button>
         </form>
-          </div>
-          <div id="repair-panel" role="tabpanel" aria-labelledby="repair-tab" hidden>
-            <form id="repair-form">
-              <div class="form-row">
-                <label><span class="visually-hidden">Класс авто</span><select id="repair-class" required disabled><option value="">Выберите класс авто</option></select></label>
-                <div class="repair-combobox">
-                  <label for="repair-work" class="visually-hidden">Работа</label>
-                  <input id="repair-work" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="repair-options" aria-describedby="repair-hint" autocomplete="off" placeholder="Выберите работу" disabled>
-                  <ul id="repair-options" role="listbox" aria-label="Работы" hidden></ul>
-                </div>
-              </div>
-              <p id="repair-hint" class="repair-hint">Введите название запасной части (например: колодки тормозные / стойка стабилизатора / фильтр воздушный).</p>
-              <p id="repair-status" role="status" aria-live="polite" class="repair-hint"></p>
-              <button type="button" id="repair-retry" class="repair-retry" hidden>Повторить загрузку</button>
-              <div class="price-result" aria-live="polite" aria-atomic="true"><span>Стоимость работ</span><strong id="repair-price">—</strong><small id="repair-note">Выберите класс автомобиля и работу</small></div>
-              <button id="repair-book" class="button dark" type="submit" disabled>Записаться</button>
-            </form>
-          </div>
-        </div>
       </div>
     </section>
     <section id="offers" class="section container">
@@ -126,7 +102,7 @@
   </dialog>
   <iframe id="booking-transport" name="booking-transport" class="booking-transport" title="Отправка заявки" hidden></iframe>
   <div class="contact-widget" aria-label="Способы связи"><div class="contact-widget-list" id="contact-widget-list"><a href="tel:88005553535">Телефон</a><button type="button" data-book-callback>Заказать звонок</button><button type="button">Telegram</button><button type="button">MAX</button></div><button class="contact-widget-toggle" type="button" aria-expanded="false" aria-controls="contact-widget-list" aria-label="Способ связи"><svg viewBox="0 0 35 32" aria-hidden="true" focusable="false"><path d="M11.2667 12.6981H23.3667M11.2667 16.4717H23.3667M4.8104 23.5777C2.4311 21.1909 1 18.1215 1 14.7736C1 7.16679 8.38723 1 17.5 1C26.6128 1 34 7.16679 34 14.7736C34 22.3804 26.6128 28.5472 17.5 28.5472C15.6278 28.5472 13.8286 28.2868 12.1511 27.8072L12 27.7925L5.03333 31V23.8219L4.8104 23.5777Z" stroke="#ffffff" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button></div>
-  <footer class="container footer"><a class="logo" href="#">SCT<span>SERVICE<br>CAR TEAM</span></a><p>© <span id="year"></span> Service Car Team</p><a href="./privacy.html">Политика обработки данных (черновик)</a><a href="#main">Наверх ↑</a></footer>
+  <footer class="container footer"><a class="logo" href="#">SCT<span>SERVICE<br>CAR TEAM</span><svg class="brand-mark" viewBox="0 0 96 42" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="32" cy="15" rx="17" ry="9"/><path d="M22 21l11-13M34 22l10-14M25 18c7-8 13-8 20-3"/><path d="M8 30c14-2 25-2 34 5M8 30c11 7 22 9 34 5M88 30c-14-2-25-2-34 5M88 30c-11 7-22 9-34 5"/><path d="M48 27l13 6-13 7-13-7 13-6z"/><path d="M43 33h10"/></g></svg></a><p>© <span id="year"></span> Service Car Team</p><a href="./privacy.html">Политика обработки данных (черновик)</a><a href="#main">Наверх ↑</a></footer>
   <noscript><p class="noscript">Для калькулятора и списка услуг включите JavaScript.</p></noscript>
 </body>
 </html>
