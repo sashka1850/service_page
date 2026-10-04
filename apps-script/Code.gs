@@ -1,5 +1,5 @@
 /** Web app bound to the price spreadsheet (Extensions → Apps Script). */
-var SCT_API_VERSION = '2026-09-26.3';
+var SCT_API_VERSION = '2026-10-04.2';
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
@@ -18,6 +18,7 @@ function doGet(e) {
         result = { ok: true, status: CacheService.getScriptCache().get('lead-' + requestNonce) === 'sent' ? 'sent' : 'pending' };
       }
     }
+    else if (p.action === 'repairCatalog') result = readRepairs_();
     else if (p.action === 'offers') result = { ok: true, offers: readOffers_(false) };
     else if (p.action === 'catalog') result = { ok: true, models: readDatabase_().models };
     else if (p.action === 'quote') {
@@ -34,7 +35,8 @@ function doGet(e) {
     console.error(error);
     // Report only expected sheet setup errors; do not expose server details.
     var setupError = String(error && error.message || '');
-    result = { ok: false, error: p.action === 'offers' &&
+    result = { ok: false, error: p.action === 'repairCatalog' && /^Repair setup: /.test(setupError)
+      ? setupError.replace('Repair setup: ', '') : p.action === 'offers' &&
       /^(Missing promotion sheet: |Missing column: )/.test(setupError)
         ? setupError.replace('Missing promotion sheet: ', 'Не найден лист: ')
           .replace('Missing column: ', 'Не найден столбец: ')
@@ -70,6 +72,20 @@ function doPost(e) {
       if (!request || request.length > 1000) throw new Error('Invalid custom request');
       messageLines = ['Новая заявка: автомобиля нет в списке', 'Имя: ' + name,
         'Телефон: ' + phone, 'Запрос: ' + request];
+    } else if (p.kind === 'repair') {
+      result.code = 'REPAIR_READ_FAILED';
+      var repairs = readRepairs_();
+      var repair = repairs.works.filter(function(row) { return row.workId === p.workId; })[0];
+      var repairClass = repairs.classes.filter(function(row) { return row.classId === p.classId; })[0];
+      result.code = 'REPAIR_UNAVAILABLE';
+      if (!repair || !repairClass || !Object.prototype.hasOwnProperty.call(repair.prices, p.classId)) throw new Error('Repair unavailable');
+      var repairPrice = repair.prices[p.classId];
+      result.code = 'PRICE_CHANGED';
+      if (p.expectedPrice === undefined || String(p.expectedPrice).trim() === '' || !Number.isFinite(Number(p.expectedPrice)) || Number(p.expectedPrice) !== repairPrice) throw new Error('Repair price changed');
+      messageLines = ['Новая заявка на ремонт', 'Имя: ' + name, 'Телефон: ' + phone,
+        'Класс авто: ' + repairClass.label, 'Работа: ' + repair.title,
+        'Трудоемкость: ' + repair.hours[p.classId] + ' нч', 'Стоимость работ: ' + repairPrice + ' ₽',
+        'ID работы: ' + repair.workId];
     } else if (p.kind === 'offer') {
       // For a lead, read the sheet again: disabling an offer must take effect
       // immediately even if the public card list is still cached.
@@ -278,4 +294,56 @@ function columns_(header, required) {
     if (!Object.prototype.hasOwnProperty.call(positions, name)) throw new Error('Missing column: ' + name);
   });
   return positions;
+}
+
+/** Small public catalogue: read once per page, and fresh again when booking. */
+function readRepairs_() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var worksSheet = spreadsheet.getSheetByName('Работы');
+  var settingsSheet = spreadsheet.getSheetByName('Настройки');
+  if (!worksSheet || !settingsSheet) throw new Error('Repair setup: Нужны листы Работы и Настройки');
+  var settings = settingsSheet.getDataRange().getValues();
+  function setting(label) {
+    var found = settings.filter(function(row) { return String(row[0]).trim() === label; });
+    if (found.length !== 1) throw new Error('Repair setup: Не найден или повторяется параметр ' + label);
+    return found[0][1];
+  }
+  function number(value) {
+    if (value === '' || value === null || value === undefined || typeof value === 'boolean') return NaN;
+    return Number(String(value).replace(/[\s\u00a0\u202f]/g, '').replace(',', '.'));
+  }
+  var rate = number(setting('Стоимость нормочаса, ₽/нч'));
+  if (!Number.isFinite(rate) || rate <= 0) throw new Error('Repair setup: Стоимость нормочаса должна быть больше нуля');
+  var hintRows = settings.filter(function(row) { return String(row[0]).trim() === 'Подсказка поиска'; });
+  var classes = ['sedan', 'crossover', 'suv'].map(function(id) {
+    var rows = settings.filter(function(row) { return String(row[0]).trim() === id; });
+    if (rows.length !== 1 || !String(rows[0][1] || '').trim()) throw new Error('Repair setup: Проверьте класс ' + id);
+    return { classId: id, label: String(rows[0][1]).trim() };
+  });
+  var data = worksSheet.getDataRange().getValues();
+  var header = data.shift() || [];
+  var required = ['work_id', 'Наименование', 'Седан, нч', 'Кроссовер, нч', 'Внедорожник, нч'];
+  var cols;
+  try { cols = columns_(header, required); }
+  catch (error) { throw new Error('Repair setup: ' + error.message.replace('Missing column: ', 'Не найден столбец: ')); }
+  var ids = Object.create(null), works = [];
+  data.forEach(function(row) {
+    if (row.every(function(value) { return value === '' || value === null; })) return;
+    var id = String(row[cols.work_id] || '').trim();
+    var title = String(row[cols['Наименование']] || '').trim();
+    if (!id || !title || ids[id]) throw new Error('Repair setup: Заполните уникальный work_id и наименование каждой работы');
+    ids[id] = true;
+    var hours = {}, prices = {};
+    classes.forEach(function(car, i) {
+      var raw = row[cols[required[i + 2]]];
+      if (raw === '' || raw === null || raw === undefined) return;
+      var value = number(raw);
+      if (!Number.isFinite(value) || value < 0) throw new Error('Repair setup: Некорректный норматив для ' + id);
+      hours[car.classId] = value;
+      prices[car.classId] = Math.round((value * rate + Number.EPSILON) * 100) / 100;
+    });
+    if (Object.keys(prices).length) works.push({ workId: id, title: title, hours: hours, prices: prices });
+  });
+  return { ok: true, classes: classes, works: works, currency: 'RUB',
+    hint: hintRows.length ? String(hintRows[0][1] || '') : '' };
 }
