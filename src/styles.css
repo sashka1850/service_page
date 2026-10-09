@@ -182,16 +182,16 @@ p {
 }
 
 .brand-mark {
-  width:118px;
-  height:42px;
+  width:59px;
+  height:21px;
   flex:0 0 auto;
   object-fit:contain;
   opacity:.9;
 }
 
 .logo-main-mark {
-  width:78px;
-  height:34px;
+  width:133px;
+  height:58px;
   flex:0 0 auto;
   object-fit:contain;
 }
