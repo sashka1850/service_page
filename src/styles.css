@@ -236,10 +236,10 @@ p {
 }
 
 .hero-image,.hero-video {
-  position:absolute;
-  inset:0;
+  position:fixed;
+  inset:92px 0 auto;
   width:100%;
-  height:100%;
+  height:calc(100dvh - 92px);
   object-fit:cover;
   z-index:-2;
 }
@@ -250,14 +250,24 @@ p {
 
 .hero:after {
   content:'';
-  position:absolute;
-  inset:0;
+  position:fixed;
+  inset:92px 0 0;
   background:linear-gradient(90deg,rgba(10,19,17,.92),rgba(10,19,17,.62) 55%,rgba(10,19,17,.3));
   z-index:-1;
+  pointer-events:none;
 }
 
 .hero-content {
+  position:relative;
+  z-index:1;
   padding-top:88px;
+}
+
+main > :not(.hero),
+.footer {
+  position:relative;
+  z-index:2;
+  background:var(--paper);
 }
 
 .eyebrow {
@@ -1075,6 +1085,13 @@ select:disabled {
     padding:15px 24px;
     flex-wrap:nowrap;
     z-index:50;
+  }
+  .hero-image,.hero-video {
+    inset:78px 0 auto;
+    height:calc(100dvh - 78px);
+  }
+  .hero:after {
+    inset:78px 0 0;
   }
   .logo {
     font-size:34px;
