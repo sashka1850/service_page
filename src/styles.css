@@ -190,8 +190,9 @@ p {
 }
 
 .logo-main-mark {
-  width:173px;
-  height:75px;
+  width:auto;
+  height:92px;
+  margin-block:-18px;
   flex:0 0 auto;
   object-fit:contain;
 }
@@ -1077,6 +1078,10 @@ select:disabled {
   }
   .logo {
     font-size:34px;
+  }
+  .logo-main-mark {
+    height:78px;
+    margin-block:-15px;
   }
   .header-action {
     display:none;
