@@ -8,16 +8,15 @@
 .is-current .process-copy{opacity:1;transform:translateY(0)}
 .process-copy h3{font-size:clamp(25px,3vw,38px);line-height:1.13;margin-bottom:18px}
 .process-copy p{font-size:clamp(16px,1.5vw,20px);line-height:1.5;color:#fff}
-.process-controls{position:absolute;bottom:30px;left:5%;right:5%;display:grid;grid-template-columns:1fr auto;gap:28px;z-index:2}
+.process-controls{position:absolute;bottom:30px;left:5%;right:5%;display:grid;grid-template-columns:1fr;gap:28px;z-index:2}
 .process-stage{font-size:clamp(25px,3.3vw,44px);line-height:1.1}
-.process-pause{width:44px;height:44px;border:1px solid #fff;border-radius:50%;background:#0005;color:#fff;font-size:22px;cursor:pointer}
 .process-steps{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px}
-.process-step{border:0;background:none;color:#c9c9c9;padding:8px 0;text-align:left;font:inherit;cursor:pointer;min-width:0}
+.process-step{border:0;background:none;color:#c9c9c9;padding:8px 0;text-align:left;font:inherit;cursor:pointer;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}
 .process-step[aria-pressed=true]{color:#fff}
-.process-track{display:block;height:4px;background:#ffffff50;border-radius:3px;overflow:hidden;margin-bottom:12px}
+.process-track{display:block;height:4px;flex:none;background:#ffffff50;border-radius:3px;overflow:hidden;margin-bottom:12px}
 .process-track>span{display:block;width:100%;height:100%;background:#fff;transform:scaleX(0);transform-origin:left}
 .process-label{font-size:12px;line-height:1.3;display:block}
-.process-step:focus-visible,.process-pause:focus-visible{outline:2px solid #fff;outline-offset:5px}
+.process-step:focus-visible{outline:2px solid #fff;outline-offset:5px}
 @media(max-width:900px){.process-player{min-height:600px}.process-copy{width:70%}.process-steps{gap:10px}.process-label{font-size:11px}}
 @media(max-width:640px){.process-player{min-height:720px}.process-copy{top:auto;bottom:235px;left:7%;width:86%;max-width:none}.process-copy h3{font-size:27px}.process-copy p{font-size:16px}.process-shade{background:linear-gradient(0deg,#000 0%,#000c 35%,#0003 80%)}.process-controls{left:7%;right:7%;bottom:22px;gap:20px}.process-steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px}.process-label{font-size:11px}.process-stage{font-size:26px}.process-slide img{object-position:center top}}
 @media(prefers-reduced-motion:reduce){.process-slide,.process-copy{transition:none;transform:none}}

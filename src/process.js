@@ -4,21 +4,15 @@
   const slides = [...root.querySelectorAll('.process-slide')];
   const buttons = [...root.querySelectorAll('.process-step')];
   const fills = buttons.map(button => button.querySelector('.process-track > span'));
-  const pause = root.querySelector('.process-pause');
   const stage = root.querySelector('.process-stage');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let current = 0, elapsed = 0, last = 0, paused = reduced, visible = false, changing = false, generation = 0;
-  const duration = 5000;
+  const duration = 6500;
   function paint() {
     buttons.forEach((button, i) => {
       button.setAttribute('aria-pressed', String(i === current));
       fills[i].style.transform = `scaleX(${i < current ? 1 : i === current ? elapsed / duration : 0})`;
     });
-  }
-  function updatePause() {
-    pause.textContent = paused ? '▶' : 'Ⅱ';
-    pause.setAttribute('aria-pressed', String(paused));
-    pause.setAttribute('aria-label', paused ? 'Продолжить показ' : 'Приостановить показ');
   }
   async function select(next) {
     const token = ++generation;
@@ -40,7 +34,6 @@
     if (token === generation) { changing = false; last = 0; }
   }
   buttons.forEach((button, i) => button.addEventListener('click', () => select(i)));
-  pause.addEventListener('click', () => { paused = !paused; last = 0; updatePause(); });
   root.addEventListener('keydown', event => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
       event.preventDefault(); select((current + (event.key === 'ArrowRight' ? 1 : slides.length - 1)) % slides.length);
@@ -56,5 +49,5 @@
     }
     last = now; requestAnimationFrame(tick);
   }
-  updatePause(); paint(); requestAnimationFrame(tick);
+  paint(); requestAnimationFrame(tick);
 })();
