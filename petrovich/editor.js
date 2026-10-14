@@ -61,7 +61,7 @@ async function cropImage(file, size = [[640, 420], [360, 480]]) {
 function mediaField(box, label, obj, key, mobileKey = null, video = false, size, whole = false) {
   const row = element('div', null, 'row'); row.append(element('strong', label));
   const preview = element('span', obj[key] || 'Файл не выбран', 'muted'); row.append(preview);
-  if (!video && obj[key]) { const img = element('img'); img.src = obj[key]; img.alt = ''; row.append(img); }
+  if (!video && obj[key]) { const img = element('img'); img.src = './preview/' + obj[key].replace(/^\.\//, ''); img.alt = ''; row.append(img); }
   const input = element('input'); input.type = 'file'; input.accept = video ? 'video/mp4' : 'image/*'; input.hidden = true;
   action(row, video ? 'Загрузить MP4' : whole ? 'Загрузить целиком' : 'Загрузить и кадрировать', () => input.click()); row.append(input);
   input.addEventListener('change', async () => {
