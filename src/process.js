@@ -7,7 +7,7 @@
   const stage = root.querySelector('.process-stage');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let current = 0, elapsed = 0, last = 0, paused = reduced, visible = false, changing = false, generation = 0;
-  const duration = 6500;
+  const duration = 7500;
   function paint() {
     buttons.forEach((button, i) => {
       button.setAttribute('aria-pressed', String(i === current));
