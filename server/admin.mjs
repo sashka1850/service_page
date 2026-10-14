@@ -188,4 +188,4 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) server.listen(Number(process.env.PORT || 8787), process.env.SCT_BIND_HOST || '127.0.0.1', () => console.log(`Petrovich editor listening on ${origin}`));
-export { server };
+export { server, publish };
