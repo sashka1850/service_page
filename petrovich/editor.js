@@ -167,7 +167,9 @@ function render() {
 }
 async function api(path, method = 'GET', body) {
   const response = await fetch(`./api${path}`, { method, credentials: 'same-origin', headers: body ? { 'Content-Type': 'application/json', 'X-SCT-CSRF': csrf } : {}, body: body ? JSON.stringify(body) : undefined });
-  const result = await response.json(); if (!response.ok) throw Error(result.error || `HTTP ${response.status}`); return result;
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) { const error = Error(result.error || `HTTP ${response.status}`); error.status = response.status; throw error; }
+  return result;
 }
 async function save() { status('Сохраняем черновик…'); const result = await api('/draft', 'POST', { content: doc, expectedRevision: revision }); revision = result.revision; dirty = false; status('Черновик сохранён'); }
 async function ready() {
@@ -178,7 +180,13 @@ async function ready() {
     const draft = await api('/draft'); doc = draft.content; revision = draft.revision;
     groups.forEach(([key, title]) => { const b = action($('#sections'), title, () => { active = key; render(); }); b.dataset.group = key; });
     render(); status('Готово');
-  } catch { $('#login').hidden = false; }
+  } catch (error) {
+    $('#login').hidden = false;
+    if (error.status !== 401) {
+      $('#login-note').textContent = 'Сервер входа на этом адресе пока не настроен. Обратитесь к владельцу сайта.';
+      $('#login-link').hidden = true;
+    }
+  }
 }
 $('#save').onclick = () => save().catch(e => status(e.message));
 $('#preview').onclick = async () => {

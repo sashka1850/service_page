@@ -187,5 +187,5 @@ const server = http.createServer(async (req, res) => {
   } catch (e) { console.error('Admin error:', e.message); return error(res, 400, e.message); }
 });
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) server.listen(Number(process.env.PORT || 8787), () => console.log(`Petrovich editor listening on ${origin}`));
+if (process.argv[1] === fileURLToPath(import.meta.url)) server.listen(Number(process.env.PORT || 8787), process.env.SCT_BIND_HOST || '127.0.0.1', () => console.log(`Petrovich editor listening on ${origin}`));
 export { server };

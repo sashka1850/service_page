@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { renderSite, renderData, validateContent } from '../scripts/content.mjs';
+import { renderSite, renderData, renderPrivacy, validateContent } from '../scripts/content.mjs';
 import { server } from '../server/admin.mjs';
 
 const original = JSON.parse(await readFile(new URL('../content/site.json', import.meta.url)));
 const template = await readFile(new URL('../index.template.html', import.meta.url), 'utf8');
+const privacyTemplate = await readFile(new URL('../privacy.template.html', import.meta.url), 'utf8');
 const copy = () => structuredClone(original);
 
 test('published content updates cards, contacts, both mobile and desktop media and preserves booking hooks', () => {
@@ -14,11 +15,15 @@ test('published content updates cards, contacts, both mobile and desktop media a
   content.space[0].photos[0].mobileSrc = './assets/lounge.jpg';
   content.config.heroPosterMobile = './assets/lounge.jpg';
   content.config.phone = '+79101234567'; content.config.phoneDisplay = '8 (910) 123-45-67';
+  content.headings.services.description = 'Описание всех услуг';
   const html = renderSite(content, template), data = renderData(content);
+  const privacy = renderPrivacy(content, privacyTemplate);
   assert.match(html, /href="tel:\+79101234567"/);
   assert.match(html, /srcset="\.\/assets\/lounge.jpg"/);
   assert.match(html, /id="calculator-form"/);
   assert.match(html, /data-book-callback/);
+  assert.match(html, /Описание всех услуг/);
+  assert.match(privacy, /tel:\+79101234567/);
   assert.match(data, /Новый мастер/);
   assert.match(data, /mobileSrc/);
 });
