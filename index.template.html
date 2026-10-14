@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Service Car Team — ремонт и обслуживание Hyundai, Kia и Genesis в Нижнем Новгороде. Техническое обслуживание, диагностика и ремонт.">
+  <meta name="theme-color" content="#161b1b">
+  <title>SCT — сервис Hyundai, Kia и Genesis в Нижнем Новгороде</title>
+  <link rel="stylesheet" href="./src/styles.css?v=contact-icon-20260926">
+  <link rel="stylesheet" href="./src/contact-map.css">
+  <script defer src="./src/site.js?v=callback-actions-20260926"></script>
+  <link rel="stylesheet" href="./src/process.css?v=20261013">
+  <script defer src="./src/process.js?v=20261013"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
+  <header class="header">
+    <a class="logo" href="#" aria-label="Service Car Team — главная"><img class="logo-main-mark" src="./assets/SCT-logo-black.svg" alt="SCT" loading="eager"></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="navigation" aria-label="Открыть меню"><span></span><span></span><span></span></button>
+    <nav id="navigation" aria-label="Основная навигация">
+      <a href="#services">Услуги</a><a href="#calculator">Стоимость </a><a href="#space">О сервисе</a><a href="#team">Команда</a><a href="#process">Как мы работаем</a><a href="#contacts">Контакты</a>
+    </nav>
+    <a class="header-action" href="#contacts">Связаться</a>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <picture>{{config.heroPosterMobile}}<img class="hero-image" src="{{config.heroPoster}}" alt="" fetchpriority="high"></picture>
+      <video class="hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true" hidden></video>
+      <div class="hero-content container">
+        <p class="eyebrow light">{{hero.eyebrow}}</p>
+        <h1 id="hero-title">{{hero.title}}</h1>
+        <p class="hero-description">{{hero.description}}</p>
+        <div class="actions"><a class="button primary" href="#calculator">Рассчитать стоимость ТО</a><a class="button outline" href="#offers">Акции сервиса</a></div>
+        <div class="hero-bottom"><span>SERVICE CAR TEAM</span><span>Знаем автомобили.<br>Ценим ваше доверие.</span></div>
+      </div>
+    </section>
+    <div class="brand-strip container" aria-label="Обслуживаемые марки"><span>Одна команда.<br>Три знакомых бренда.</span><strong>HYUNDAI</strong><strong>KIA</strong><strong>GENESIS</strong></div>
+    <section id="services" class="section container">
+      <div class="section-heading"><div><p class="eyebrow">01 / Что мы делаем</p><h2>{{headings.services.title}}</h2></div></div>
+      <div class="services-grid" id="services-list"></div>
+    </section>
+    <section id="calculator" class="calculator-section">
+      <div class="container calculator-layout">
+        <div><p class="eyebrow">02 / Стоимость обслуживания</p><h2>{{headings.calculator.title}}</h2><p class="section-description">{{headings.calculator.description}}</p></div>
+        <div class="calculator-card">
+          <div class="calculator-tabs" role="tablist" aria-label="Тип расчета">
+            <button type="button" id="maintenance-tab" role="tab" aria-controls="maintenance-panel" aria-selected="true">Стоимость ТО</button>
+            <button type="button" id="repair-tab" role="tab" aria-controls="repair-panel" aria-selected="false" tabindex="-1">Стоимость ремонта</button>
+          </div>
+          <div id="maintenance-panel" role="tabpanel" aria-labelledby="maintenance-tab">
+        <form id="calculator-form">
+          <div class="form-row"><label><span class="visually-hidden">Марка</span><select id="brand" required disabled><option value="">Загрузка марок…</option></select></label><label><span class="visually-hidden">Модель</span><select id="model" required disabled><option value="">Выберите модель</option></select></label></div>
+          <div class="form-row calculator-extra"><label><span class="visually-hidden">Комплектация</span><select id="variant" required disabled><option value="">Выберите комплектацию</option></select></label><label><span class="visually-hidden">Вид ТО</span><select id="maintenance-type" required disabled><option value="">Выбрать ТО</option></select></label></div>
+          <label class="custom-car-choice"><input id="custom-car" type="checkbox" aria-controls="custom-car-panel" aria-expanded="false"><span>Моего автомобиля нет в списке</span></label>
+          <div id="custom-car-panel" class="custom-car-panel" aria-hidden="true"><div class="custom-car-panel-inner"><label class="custom-car-field"><span class="visually-hidden">Модель автомобиля и желаемое обслуживание</span><textarea id="custom-car-request" maxlength="1000" placeholder="Введите модель авто и желаемое обслуживание" disabled></textarea></label></div></div>
+          <div class="price-result" aria-live="polite" aria-atomic="true"><strong id="price">—</strong><small id="price-note">Выберите ваш автомобиль</small></div>
+          <button class="button dark" type="submit" disabled>Записаться</button>
+        </form>
+          </div>
+          <div id="repair-panel" role="tabpanel" aria-labelledby="repair-tab" hidden>
+            <form id="repair-form">
+              <div class="form-row">
+                <label><span class="visually-hidden">Класс авто</span><select id="repair-class" required disabled><option value="">Выберите класс авто</option></select></label>
+                <div class="repair-combobox">
+                  <label for="repair-work" class="visually-hidden">Работа</label>
+                  <input id="repair-work" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="repair-options" aria-describedby="repair-hint" autocomplete="off" placeholder="Выберите работу" disabled>
+                  <ul id="repair-options" role="listbox" aria-label="Работы" hidden></ul>
+                </div>
+              </div>
+              <p id="repair-hint" class="repair-hint">Введите название запасной части (например: колодки тормозные / стойка стабилизатора / фильтр воздушный).</p>
+              <p id="repair-status" role="status" aria-live="polite" class="repair-hint"></p>
+              <button type="button" id="repair-retry" class="repair-retry" hidden>Повторить загрузку</button>
+              <div class="price-result" aria-live="polite" aria-atomic="true"><span>Стоимость работ</span><strong id="repair-price">—</strong><small id="repair-note">Выберите класс автомобиля и работу</small></div>
+              <button id="repair-book" class="button dark" type="submit" disabled>Записаться</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="offers" class="section container">
+      <div class="section-heading"><div><p class="eyebrow">03 / Акции сервиса</p><h2>{{headings.offers.title}}</h2></div><p>{{headings.offers.description}}</p></div>
+      <div id="offers-list" class="offers-grid"></div>
+    </section>
+    <section id="space" class="section space-section"><div class="container">
+      <div class="section-heading"><div><p class="eyebrow">04 / Пространство сервиса</p><h2>{{headings.space.title}}</h2></div><p>{{headings.space.description}}</p></div>
+      {{space.cards}}
+    </div></section>
+    <section id="team" class="section container">
+      <div class="section-heading"><div><p class="eyebrow">05 / Люди за работой</p><h2>{{headings.team.title}}</h2></div><p>{{headings.team.description}}</p></div>
+      <div class="team-grid" id="team-list"></div>
+    </section>
+    <section id="process" class="section container" aria-label="Как мы работаем">
+<div class="section-heading"><div><p class="eyebrow">06 / Как мы работаем</p><h2>{{headings.process.title}}</h2></div></div>
+{{process.player}}</section>
+    {{contacts.section}}
+  </main>
+  <dialog id="booking-dialog" class="booking-dialog" aria-labelledby="booking-title">
+    <button id="booking-close" class="booking-close" type="button" aria-label="Закрыть форму">×</button>
+    <form id="booking-form" class="booking-form" novalidate>
+      <p class="eyebrow">Запись на обслуживание</p>
+      <h2 id="booking-title">Мы вам перезвоним</h2>
+      <p id="booking-service" class="booking-service"></p>
+      <label>Ваше имя <span aria-hidden="true">*</span><input id="booking-name" name="name" type="text" autocomplete="name" maxlength="80" required placeholder="Как к вам обращаться?"></label>
+      <label>Номер телефона <span aria-hidden="true">*</span><input id="booking-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" required placeholder="+7 (999) 123-45-67" aria-describedby="booking-phone-hint"></label>
+      <small id="booking-phone-hint" class="booking-hint">Укажите российский номер: +7 или 8 и 10 цифр.</small>
+      <label class="booking-consent"><input id="booking-consent" type="checkbox" required><span>Согласен на обработку персональных данных для связи по заявке. <a href="./privacy.html" target="_blank" rel="noopener noreferrer">Политика обработки персональных данных</a> (редакция для согласования).</span></label>
+      <div class="booking-actions"><button id="booking-submit" class="button dark" type="submit" disabled>Заказать звонок</button></div>
+      <p id="booking-status" class="booking-status" role="status" aria-live="polite"></p>
+      <p id="booking-required" class="booking-hint">Заполните обязательные поля</p>
+      <a id="booking-call" class="button outline">Позвонить</a>
+    </form>
+    <section id="booking-result" class="booking-result" aria-live="polite" aria-atomic="true" hidden>
+      <div id="booking-result-icon" class="booking-result-icon" aria-hidden="true">
+        <svg class="booking-mark booking-mark-success" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="35"/><path d="M23 41l11 11 23-25"/></svg>
+        <svg class="booking-mark booking-mark-error" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="35"/><path d="M29 29l22 22M51 29L29 51"/></svg>
+      </div>
+      <p id="booking-result-eyebrow" class="eyebrow">Отправляем заявку</p>
+      <h2 id="booking-result-title" tabindex="-1">Пожалуйста, подождите</h2>
+      <p id="booking-result-text"></p>
+      <div class="booking-result-actions">
+        <a id="booking-result-call" class="button outline" hidden>Позвонить</a>
+        <button id="booking-result-retry" class="button dark" type="button" hidden>Повторить попытку</button>
+        <button id="booking-result-check" class="button dark" type="button" hidden>Проверить статус</button>
+        <button id="booking-result-done" class="button dark" type="button" hidden>Закрыть</button>
+      </div>
+    </section>
+  </dialog>
+  <iframe id="booking-transport" name="booking-transport" class="booking-transport" title="Отправка заявки" hidden></iframe>
+  {{contacts.widget}}
+  {{contacts.footer}}
+  <noscript><p class="noscript">Для калькулятора и списка услуг включите JavaScript.</p></noscript>
+</body>
+</html>

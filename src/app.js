@@ -18,9 +18,9 @@ function renderServiceDescription(service) {
   if (service.items) return `<ul>${service.items.map(item => `<li>${renderServiceItem(item)}</li>`).join('')}</ul>`;
   return `<p>${escape(service.text || '')}</p>`;
 }
-$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden>${renderServiceDescription(s)}${i === 0 ? `<a class="service-action button dark" href="${escape(s.target)}">${escape(s.action)}</a>` : `<button class="service-action button dark" type="button" data-book-callback>${escape(s.action)}</button>`}</div></article>`).join('');
+$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${String(i + 1).padStart(2, '0')} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden>${renderServiceDescription(s)}${s.target === '#calculator' ? `<a class="service-action button dark" href="${escape(s.target)}">${escape(s.action)}</a>` : `<button class="service-action button dark" type="button" data-book-callback>${escape(s.action)}</button>`}</div></article>`).join('');
 $('#offers-list').innerHTML = '<p role="status">Загружаем актуальные акции…</p>';
-$('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
+$('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="${escape(matchMedia('(max-width: 640px)').matches ? (s.photos[0]?.mobileSrc || s.image) : s.image)}" alt="${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model'), variant = $('#variant'), maintenance = $('#maintenance-type');
 const bookButton = $('#calculator-form button[type="submit"]');
 const customCar = $('#custom-car'), customCarPanel = $('#custom-car-panel'), customCarRequest = $('#custom-car-request');
@@ -646,7 +646,8 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
   const images = photos.map((photo, index) => {
     const img = document.createElement(photo.src ? 'img' : 'div');
     if (photo.src) {
-      img.src = photo.src; img.alt = photo.alt; img.loading = 'lazy'; img.draggable = false;
+      img.src = matchMedia('(max-width: 640px)').matches ? (photo.mobileSrc || photo.src) : photo.src;
+      img.alt = photo.alt; img.loading = 'lazy'; img.draggable = false;
       if (photo.kind === 'certificate') img.classList.add('certificate-image');
     } else {
       img.className = `team-placeholder ${photo.kind === 'certificate' ? 'certificate-placeholder' : 'portrait-placeholder'}`;
@@ -658,6 +659,10 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
     img.hidden = index !== 0; slides.append(img);
     return img;
   });
+  const mobileMedia = matchMedia('(max-width: 640px)');
+  mobileMedia.addEventListener?.('change', () => images.forEach((img, i) => {
+    if (img.tagName === 'IMG') img.src = mobileMedia.matches ? (photos[i].mobileSrc || photos[i].src) : photos[i].src;
+  }));
   let slideAnimations = [];
   let slideRevision = 0;
   function show(index) {
