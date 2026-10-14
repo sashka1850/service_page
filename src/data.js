@@ -1,10 +1,10 @@
 // Данные и контакты редактируются здесь, независимо от оформления.
-// Не публикуйте тестовый телефон и неподтверждённый номер дома.
 export const config = {
-  phone: '', // Международный формат: +7…
+  phone: '+79108864000',
+  email: 'sto-msh52d@yandex.ru',
   telegram: '', // Полная ссылка https://t.me/…
   address: 'Нижний Новгород, Московское шоссе',
-  house: '', // В исходнике расходятся 52б и 52д — требуется подтверждение.
+  house: '52д',
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/service_zone.mp4', // Локальный путь, например ./assets/hero.mp4.
   maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',

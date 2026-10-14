@@ -994,7 +994,8 @@ select:disabled {
 .footer {
   display:flex;
   justify-content:space-between;
-  align-items:center;
+  align-items:flex-start;
+  flex-wrap:wrap;
   gap:24px;
   padding-block:35px;
 }
@@ -1003,6 +1004,10 @@ select:disabled {
   font-size:11px;
   color:var(--muted);
 }
+.footer-details { flex:1 1 260px; min-width:0; }
+.footer-details p { margin:0 0 8px; }
+.footer-details address { font-style:normal; font-size:12px; line-height:1.6; color:var(--muted); }
+.footer-details a { color:inherit; text-decoration:underline; text-underline-offset:2px; overflow-wrap:anywhere; }
 
 .skip-link {
   position:fixed;

@@ -413,6 +413,7 @@ document.addEventListener('click', event => {
 });
 const contactLinks = [];
 if (/^\+[1-9]\d{7,14}$/.test(config.phone)) contactLinks.push({href: `tel:${config.phone}`, text: config.phone});
+if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.email)) contactLinks.push({href: `mailto:${config.email}`, text: config.email});
 if (/^https:\/\/t\.me\/[a-zA-Z0-9_]+$/.test(config.telegram)) contactLinks.push({href: config.telegram, text: 'Написать в Telegram'});
 for (const item of contactLinks) { const a = document.createElement('a'); a.className = 'button primary'; a.href = item.href; a.textContent = item.text; $('#contact-actions').append(a); }
 if (contactLinks.length) $('#contact-status').textContent = 'Свяжитесь с нами, чтобы уточнить стоимость и время визита.';
