@@ -6,6 +6,7 @@
   "description": "Самостоятельный сайт Service Car Team без Tilda",
   "scripts": {
     "start": "python3 -m http.server 8000 --bind 127.0.0.1",
+    "admin": "node server/admin.mjs",
     "test": "node --test",
     "build": "node scripts/build.mjs"
   }
