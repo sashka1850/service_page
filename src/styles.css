@@ -567,10 +567,20 @@ h1 {
 
 .calculator-layout {
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:100px;
-  align-items:center;
+  grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
+  gap:36px 48px;
+  align-items:stretch;
 }
+
+.calculator-intro { grid-column:1 / -1; }
+.maintenance-comparison { min-width:0; display:flex; flex-direction:column; }
+.maintenance-comparison h3 { margin:0 0 16px; font-size:26px; line-height:1.2; }
+.maintenance-table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:14px; flex:1; }
+.maintenance-table th,.maintenance-table td { padding:10px 4px; border-bottom:1px solid #cdd2c5; text-align:center; font-weight:400; line-height:1.4; }
+.maintenance-table th:first-child { width:43%; text-align:left; padding-left:0; }
+.maintenance-table thead th { font-size:12px; padding-top:0; }
+.maintenance-included { font-size:16px; }
+.maintenance-absent { color:var(--muted); }
 
 .section-description {
   max-width:380px;
@@ -1510,6 +1520,26 @@ select:disabled {
 .space-slides > img, .space-slides > .team-placeholder { grid-area: 1 / 1; min-width: 0; width: 100%; }
 
 /* Maintenance and repair share the calculator surface, with independent forms. */
+.calculator-layout > .calculator-card { min-width:0; padding:24px; display:flex; flex-direction:column; }
+.calculator-layout .calculator-card [role="tabpanel"] { flex:1; display:flex; flex-direction:column; }
+.calculator-layout .calculator-card form { flex:1; display:flex; flex-direction:column; }
+.calculator-layout .calculator-card form > .button { margin-top:auto; }
+.calculator-layout .price-result { margin-top:18px; padding:16px 0; gap:8px; }
+.calculator-layout .price-result strong { font-size:36px; }
+.calculator-layout .calculator-tabs { margin-bottom:20px; }
+@media(max-width:760px) {
+  .calculator-layout { grid-template-columns:minmax(0,1fr); gap:28px; }
+  .maintenance-comparison h3 { font-size:23px; }
+  .maintenance-table { font-size:13px; }
+  .maintenance-table th,.maintenance-table td { padding-block:10px; }
+  .maintenance-table thead th { font-size:11px; }
+  .maintenance-table th:first-child { width:40%; }
+}
+@media(max-width:380px) {
+  .maintenance-table { font-size:12px; }
+  .maintenance-table thead th { font-size:10px; padding-inline:1px; }
+  .calculator-layout > .calculator-card { padding:18px; }
+}
 .calculator-card [role="tabpanel"][hidden], .calculator-card [hidden] { display:none!important; }
 .calculator-tabs { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; border-bottom:1px solid var(--line); }
 .calculator-tabs button { padding:0 0 16px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--muted); font:inherit; font-size:20px; text-align:left; cursor:pointer; }
