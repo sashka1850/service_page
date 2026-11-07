@@ -26,11 +26,17 @@ export const team = [
 // Альбомы пространства сервиса. Добавляйте любое количество { src, alt }.
 // Новые снимки клиентской и ремонтной зон пока не предоставлены.
 export const spaceAlbums = [
-  [
-    { src: './assets/exterior.jpg', alt: 'Фасад сервисного центра' },
-    { src: './assets/workshop.png', alt: 'Ремонтная зона сервисного центра' },
-    { src: './assets/lounge.jpg', alt: 'Клиентская зона сервисного центра' },
+  [//Блок "Сервичсный центр"
+    { src: './assets/service center/service_center_1.jpg', alt: 'Фасад сервисного центра' },
+    {  src: './assets/service center/service_center_2.jpg', alt: 'Цех сервисного центра' },
   ],
   [{ src: './assets/lounge.jpg', alt: 'Клиентская зона' }],
   [{ src: './assets/workshop.png', alt: 'Ремонтная зона' }],
-];
+  [// Блок "Рабочий процесс"
+    {src: './assets/repair/repair_1.jpg', alt: 'Рсх' },
+    {src: './assets/repair/repair_2.jpg', alt: 'Диагностика подвески' },
+    {src: './assets/repair/repair_3.jpg', alt: 'Диагностика ЭБУ' },
+    {src: './assets/repair/repair_4.jpg', alt: 'Диагностика подвески' },
+    {src: './assets/repair/repair_5.jpg', alt: 'Общий вид' },
+    ],  
+  ];
