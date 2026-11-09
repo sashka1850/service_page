@@ -43,7 +43,12 @@
         <div class="calculator-intro"><p class="eyebrow">02 / Стоимость обслуживания</p><h2>Начните <br>с понятной цены.</h2><p class="section-description">Рассчитайте стоимость ТО или выберите класс автомобиля и ремонтную работу.</p></div>
         <section class="maintenance-comparison" aria-labelledby="maintenance-comparison-title">
           <h3 id="maintenance-comparison-title">Что входит в ТО</h3>
-          <table class="maintenance-table">
+          <div class="engine-tabs animated-tabs" role="tablist" aria-label="Тип двигателя">
+            <button type="button" id="petrol-engine-tab" role="tab" aria-controls="maintenance-table" aria-selected="true">Бензин</button>
+            <button type="button" id="diesel-engine-tab" role="tab" aria-controls="maintenance-table" aria-selected="false" tabindex="-1">Дизель</button>
+            <span class="tabs-indicator" aria-hidden="true"></span>
+          </div>
+          <table id="maintenance-table" class="maintenance-table">
             <caption class="visually-hidden">Сравнение состава базового, расширенного и полного ТО</caption>
             <thead><tr><th scope="col"></th><th scope="col">Базовое</th><th scope="col">Расширенное</th><th scope="col">Полное</th></tr></thead>
             <tbody>
@@ -51,17 +56,18 @@
               <tr><th scope="row">Фильтр масляный</th><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td></tr>
               <tr><th scope="row">Сливная пробка</th><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td></tr>
               <tr><th scope="row">Фильтр воздушный</th><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td></tr>
-              <tr><th scope="row">Фильтр салонный</th><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td></tr>
+              <tr><th scope="row">Фильтр салонный</th><td><span aria-hidden="true" class="maintenance-absent">—</span><span class="visually-hidden">Не входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td></tr>
               <tr><th scope="row">Тормозная жидкость</th><td><span aria-hidden="true" class="maintenance-absent">—</span><span class="visually-hidden">Не входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td></tr>
-              <tr><th scope="row">Свечи зажигания</th><td><span aria-hidden="true" class="maintenance-absent">—</span><span class="visually-hidden">Не входит</span></td><td><span aria-hidden="true" class="maintenance-absent">—</span><span class="visually-hidden">Не входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td></tr>
               <tr><th scope="row">Фильтр топливный</th><td><span aria-hidden="true" class="maintenance-absent">—</span><span class="visually-hidden">Не входит</span></td><td><span aria-hidden="true" class="maintenance-absent">—</span><span class="visually-hidden">Не входит</span></td><td><span aria-hidden="true" class="maintenance-included">●</span><span class="visually-hidden">Входит</span></td></tr>
+              <tr><th scope="row">Свечи зажигания</th><td><span aria-hidden="true" class="maintenance-absent">—</span><span class="visually-hidden">Не входит</span></td><td><span aria-hidden="true" class="maintenance-absent">—</span><span class="visually-hidden">Не входит</span></td><td><span aria-hidden="true" class="maintenance-included spark-plug-petrol">●</span><span class="visually-hidden spark-plug-petrol">Входит</span><span aria-hidden="true" class="maintenance-absent spark-plug-diesel" hidden>—</span><span class="visually-hidden spark-plug-diesel" hidden>Не входит</span></td></tr>
             </tbody>
           </table>
         </section>
         <div class="calculator-card">
-          <div class="calculator-tabs" role="tablist" aria-label="Тип расчета">
+          <div class="calculator-tabs animated-tabs" role="tablist" aria-label="Тип расчета">
             <button type="button" id="maintenance-tab" role="tab" aria-controls="maintenance-panel" aria-selected="true">Стоимость ТО</button>
             <button type="button" id="repair-tab" role="tab" aria-controls="repair-panel" aria-selected="false" tabindex="-1">Стоимость ремонта</button>
+            <span class="tabs-indicator" aria-hidden="true"></span>
           </div>
           <div id="maintenance-panel" role="tabpanel" aria-labelledby="maintenance-tab">
         <form id="calculator-form">

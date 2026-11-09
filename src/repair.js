@@ -81,6 +81,7 @@ export function initRepairCalculator({ apiRequest, openBooking, money }) {
         t.tabIndex = active ? 0 : -1;
         document.getElementById(t.getAttribute('aria-controls')).hidden = !active;
       });
+      tab.closest('.calculator-tabs').classList.toggle('is-second', i === 1);
       close();
       if (tab.id === 'repair-tab') load();
     });

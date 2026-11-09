@@ -368,6 +368,38 @@ bookingForm.addEventListener('submit', event => {
 loadCatalog();
 loadOffers();
 initRepairCalculator({ apiRequest, openBooking, money });
+
+function setupEngineTabs() {
+  const tabsRoot = document.querySelector('.engine-tabs');
+  if (!tabsRoot) return;
+  const tabs = [...tabsRoot.querySelectorAll('[role="tab"]')];
+  const setEngine = (tab, index) => {
+    tabs.forEach(item => {
+      const active = item === tab;
+      item.setAttribute('aria-selected', String(active));
+      item.tabIndex = active ? 0 : -1;
+    });
+    tabsRoot.classList.toggle('is-second', index === 1);
+    document.querySelectorAll('.spark-plug-petrol').forEach(item => { item.hidden = index === 1; });
+    document.querySelectorAll('.spark-plug-diesel').forEach(item => { item.hidden = index === 0; });
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => setEngine(tab, index));
+    tab.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+        : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      tabs[nextIndex].click();
+      tabs[nextIndex].focus();
+    });
+  });
+}
+
+setupEngineTabs();
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  document.querySelectorAll('.animated-tabs').forEach(tabs => tabs.classList.add('is-ready'));
+}));
 const serviceCards = [...document.querySelectorAll('.service-card')];
 function closeServiceCard(card) {
   const button = card.querySelector('.service-toggle');
