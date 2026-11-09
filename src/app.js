@@ -505,7 +505,8 @@ function setupMobileCardProgress() {
     const progress = document.createElement('div');
     progress.className = 'mobile-scroll-progress';
     progress.innerHTML = '<span></span>';
-    section.append(progress);
+    const progressHost = section.id === 'space' ? section.querySelector('.container') : section;
+    progressHost.append(progress);
     const bar = progress.querySelector('span');
     let frame = 0;
     const update = () => {

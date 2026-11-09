@@ -793,6 +793,47 @@ select:disabled {
   background:#eeeee8;
 }
 
+/* Four service-space albums stay in one horizontal strip on desktop too. */
+#space .space-grid {
+  display:flex;
+  overflow-x:auto;
+  overflow-y:hidden;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+
+#space .space-grid::-webkit-scrollbar {
+  display:none;
+}
+
+#space .space-card {
+  flex:0 0 calc((100% - 48px) / 3);
+  min-width:0;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+}
+
+#space .mobile-scroll-progress {
+  display:block;
+  width:100%;
+  max-width:1280px;
+  height:2px;
+  margin:18px auto 0;
+  overflow:hidden;
+  background:#171e1c20;
+}
+
+#space .mobile-scroll-progress span {
+  display:block;
+  width:100%;
+  height:100%;
+  background:#171e1c;
+  transform:scaleX(0);
+  transform-origin:left center;
+}
+
 .space-card img {
   width:100%;
   height:260px;
@@ -1390,6 +1431,10 @@ select:disabled {
   .space-grid,.team-grid {
     grid-template-columns:1fr;
     gap:32px;
+  }
+  #space .space-card {
+    flex-basis:calc(93% - 16px);
+    max-width:calc(93% - 16px);
   }
   .mobile-card-scroll {
     gap:16px;

@@ -9,7 +9,7 @@ const config = {
   address: 'Нижний Новгород, Московское шоссе',
   house: '', // В исходнике расходятся 52б и 52д — требуется подтверждение.
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
-  heroVideo: './assets/service_zone.mp4', // Локальный путь, например ./assets/hero.mp4.
+  heroVideo: './assets/main_video.mp4', // Локальный путь, например ./assets/hero.mp4.
   maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
 };
 const services = [
@@ -26,16 +26,31 @@ const team = [
   { name: 'Вадим Смирнов', role: 'Старший сервисный консультант', image: 'vadim.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Обсуждение задач и сопровождение обслуживания.' },
 ];
 
-// Альбомы пространства сервиса. Добавляйте любое количество { src, alt }.
-// Новые снимки клиентской и ремонтной зон пока не предоставлены.
+// Альбомы пространства сервиса. Порядок соответствует карточкам в index.html.
 const spaceAlbums = [
   [
-    { src: './assets/exterior.jpg', alt: 'Фасад сервисного центра' },
-    { src: './assets/workshop.png', alt: 'Ремонтная зона сервисного центра' },
-    { src: './assets/lounge.jpg', alt: 'Клиентская зона сервисного центра' },
+    { src: './assets/service_center/service_center_1.jpg', alt: 'Сервисный центр Service Car Team' },
+    { src: './assets/service_center/service_center_2.jpg', alt: 'Ремонтный цех сервисного центра' },
   ],
-  [{ src: './assets/lounge.jpg', alt: 'Клиентская зона' }],
-  [{ src: './assets/workshop.png', alt: 'Ремонтная зона' }],
+  [
+    { src: './assets/client_area/client_area_1.jpg', alt: 'Клиентская зона Service Car Team' },
+    { src: './assets/client_area/client_area_2.jpg', alt: 'Место ожидания в клиентской зоне' },
+    { src: './assets/client_area/client_area_3.jpg', alt: 'Интерьер клиентской зоны' },
+  ],
+  [
+    { src: './assets/repair/repair_1.jpg', alt: 'Рабочий процесс в сервисном центре' },
+    { src: './assets/repair/repair_2.jpg', alt: 'Диагностика подвески автомобиля' },
+    { src: './assets/repair/repair_3.jpg', alt: 'Компьютерная диагностика автомобиля' },
+    { src: './assets/repair/repair_4.jpg', alt: 'Ремонт автомобиля в сервисном центре' },
+    { src: './assets/repair/repair_5.jpg', alt: 'Работа специалистов Service Car Team' },
+  ],
+  [
+    { src: './assets/tools/tool_1.jpg', alt: 'Профессиональное оборудование сервисного центра' },
+    { src: './assets/tools/tool_3.jpg', alt: 'Оборудование для диагностики автомобиля' },
+    { src: './assets/tools/tool_4.jpg', alt: 'Инструменты для ремонта автомобиля' },
+    { src: './assets/tools/tool_5.jpg', alt: 'Техническое оборудование Service Car Team' },
+    { src: './assets/tools/tool_6.jpg', alt: 'Оборудование ремонтной зоны' },
+  ],
 ];
 
 function searchWorks(works, classId, query) {
@@ -670,7 +685,8 @@ function setupMobileCardProgress() {
     const progress = document.createElement('div');
     progress.className = 'mobile-scroll-progress';
     progress.innerHTML = '<span></span>';
-    section.append(progress);
+    const progressHost = section.id === 'space' ? section.querySelector('.container') : section;
+    progressHost.append(progress);
     const bar = progress.querySelector('span');
     let frame = 0;
     const update = () => {

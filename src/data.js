@@ -23,20 +23,29 @@ export const team = [
   { name: 'Вадим Смирнов', role: 'Старший сервисный консультант', image: 'vadim.jpg', photos: [{ kind: 'portrait', alt: 'Портрет — заглушка' }, { kind: 'certificate', alt: 'Сертификат — заглушка' }], text: 'Обсуждение задач и сопровождение обслуживания.' },
 ];
 
-// Альбомы пространства сервиса. Добавляйте любое количество { src, alt }.
-// Новые снимки клиентской и ремонтной зон пока не предоставлены.
+// Альбомы пространства сервиса. Порядок соответствует карточкам в index.html.
 export const spaceAlbums = [
-  [//Блок "Сервичсный центр"
-    { src: './assets/service center/service_center_1.jpg', alt: 'Фасад сервисного центра' },
-    {  src: './assets/service center/service_center_2.jpg', alt: 'Цех сервисного центра' },
+  [
+    { src: './assets/service_center/service_center_1.jpg', alt: 'Сервисный центр Service Car Team' },
+    { src: './assets/service_center/service_center_2.jpg', alt: 'Ремонтный цех сервисного центра' },
   ],
-  [{ src: './assets/lounge.jpg', alt: 'Клиентская зона' }],
-  [{ src: './assets/workshop.png', alt: 'Ремонтная зона' }],
-  [// Блок "Рабочий процесс"
-    {src: './assets/repair/repair_1.jpg', alt: 'Рсх' },
-    {src: './assets/repair/repair_2.jpg', alt: 'Диагностика подвески' },
-    {src: './assets/repair/repair_3.jpg', alt: 'Диагностика ЭБУ' },
-    {src: './assets/repair/repair_4.jpg', alt: 'Диагностика подвески' },
-    {src: './assets/repair/repair_5.jpg', alt: 'Общий вид' },
-    ],  
-  ];
+  [
+    { src: './assets/client_area/client_area_1.jpg', alt: 'Клиентская зона Service Car Team' },
+    { src: './assets/client_area/client_area_2.jpg', alt: 'Место ожидания в клиентской зоне' },
+    { src: './assets/client_area/client_area_3.jpg', alt: 'Интерьер клиентской зоны' },
+  ],
+  [
+    { src: './assets/repair/repair_1.jpg', alt: 'Рабочий процесс в сервисном центре' },
+    { src: './assets/repair/repair_2.jpg', alt: 'Диагностика подвески автомобиля' },
+    { src: './assets/repair/repair_3.jpg', alt: 'Компьютерная диагностика автомобиля' },
+    { src: './assets/repair/repair_4.jpg', alt: 'Ремонт автомобиля в сервисном центре' },
+    { src: './assets/repair/repair_5.jpg', alt: 'Работа специалистов Service Car Team' },
+  ],
+  [
+    { src: './assets/tools/tool_1.jpg', alt: 'Профессиональное оборудование сервисного центра' },
+    { src: './assets/tools/tool_3.jpg', alt: 'Оборудование для диагностики автомобиля' },
+    { src: './assets/tools/tool_4.jpg', alt: 'Инструменты для ремонта автомобиля' },
+    { src: './assets/tools/tool_5.jpg', alt: 'Техническое оборудование Service Car Team' },
+    { src: './assets/tools/tool_6.jpg', alt: 'Оборудование ремонтной зоны' },
+  ],
+];
