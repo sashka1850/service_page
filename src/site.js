@@ -2,12 +2,11 @@
 (() => {
 "use strict";
 // Данные и контакты редактируются здесь, независимо от оформления.
-// Не публикуйте тестовый телефон и неподтверждённый номер дома.
 const config = {
-  phone: '', // Международный формат: +7…
+  phone: '+79108864000',
   telegram: '', // Полная ссылка https://t.me/…
   address: 'Нижний Новгород, Московское шоссе',
-  house: '', // В исходнике расходятся 52б и 52д — требуется подтверждение.
+  house: '52д',
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/main_video.mp4', // Локальный путь, например ./assets/hero.mp4.
   maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
@@ -184,24 +183,7 @@ function initRepairCalculator({ apiRequest, openBooking, money }) {
 const $ = (selector) => document.querySelector(selector);
 const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value);
 const escape = (value) => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-function renderServiceItem(item) {
-  if (typeof item === 'string') return escape(item);
-  const text = String(item.text || '');
-  const emphasis = String(item.emphasis || '');
-  const emphasisIndex = emphasis ? text.indexOf(emphasis) : -1;
-  if (emphasisIndex < 0) return escape(text);
-  return `${escape(text.slice(0, emphasisIndex))}<strong>${escape(emphasis)}</strong>${escape(text.slice(emphasisIndex + emphasis.length))}`;
-}
-function renderServiceDescription(service) {
-  if (service.columns) {
-    return `<div class="service-columns">${service.columns.map(column => `<div><h4>${escape(column.title)}</h4><ul>${column.items.map(item => `<li>${renderServiceItem(item)}</li>`).join('')}</ul></div>`).join('')}</div>`;
-  }
-  if (service.items) return `<ul>${service.items.map(item => `<li>${renderServiceItem(item)}</li>`).join('')}</ul>`;
-  return `<p>${escape(service.text || '')}</p>`;
-}
-$('#services-list').innerHTML = services.map((s, i) => `<article class="service-card"><div class="service-card-head"><span class="card-number">${s.icon} /</span><button class="service-toggle" type="button" aria-expanded="false" aria-controls="service-panel-${i}" aria-label="Открыть описание: ${escape(s.title)}"></button></div><h3>${escape(s.title)}</h3><div class="service-details" id="service-panel-${i}" hidden>${renderServiceDescription(s)}${i === 0 ? `<a class="service-action button dark" href="${escape(s.target)}">${escape(s.action)}</a>` : `<button class="service-action button dark" type="button" data-book-callback>${escape(s.action)}</button>`}</div></article>`).join('');
 $('#offers-list').innerHTML = '<p role="status">Загружаем актуальные акции…</p>';
-$('#team-list').innerHTML = team.map(s => `<article class="team-card"><img src="./assets/${escape(s.image)}" alt="Временное фото для карточки: ${escape(s.name)}" loading="lazy"><p class="team-role">${escape(s.role)}</p><h3>${escape(s.name)}</h3><p>${escape(s.text)}</p></article>`).join('');
 const brand = $('#brand'), model = $('#model'), variant = $('#variant'), maintenance = $('#maintenance-type');
 const bookButton = $('#calculator-form button[type="submit"]');
 const customCar = $('#custom-car'), customCarPanel = $('#custom-car-panel'), customCarRequest = $('#custom-car-request');
