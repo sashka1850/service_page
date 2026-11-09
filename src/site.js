@@ -2,12 +2,12 @@
 (() => {
 "use strict";
 // Данные и контакты редактируются здесь, независимо от оформления.
-// Не публикуйте тестовый телефон и неподтверждённый номер дома.
 const config = {
-  phone: '', // Международный формат: +7…
+  phone: '+79108864000',
+  email: 'sto-msh52d@yandex.ru',
   telegram: '', // Полная ссылка https://t.me/…
   address: 'Нижний Новгород, Московское шоссе',
-  house: '', // В исходнике расходятся 52б и 52д — требуется подтверждение.
+  house: '52д',
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/service_zone.mp4', // Локальный путь, например ./assets/hero.mp4.
   maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
@@ -578,6 +578,7 @@ document.addEventListener('click', event => {
 });
 const contactLinks = [];
 if (/^\+[1-9]\d{7,14}$/.test(config.phone)) contactLinks.push({href: `tel:${config.phone}`, text: config.phone});
+if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.email)) contactLinks.push({href: `mailto:${config.email}`, text: config.email});
 if (/^https:\/\/t\.me\/[a-zA-Z0-9_]+$/.test(config.telegram)) contactLinks.push({href: config.telegram, text: 'Написать в Telegram'});
 for (const item of contactLinks) { const a = document.createElement('a'); a.className = 'button primary'; a.href = item.href; a.textContent = item.text; $('#contact-actions').append(a); }
 if (contactLinks.length) $('#contact-status').textContent = 'Свяжитесь с нами, чтобы уточнить стоимость и время визита.';
