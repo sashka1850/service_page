@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-function makeApi() {
+function makeApi(legacy = true) {
   const tables = {
     Работы: [
       ['work_id', 'Наименование', 'Седан, нч', 'Кроссовер, нч', 'Внедорожник, нч'],
@@ -49,7 +49,7 @@ function makeApi() {
     SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: name => tables[name] && ({ getDataRange: () => ({ getValues: () => tables[name].map(row => [...row]) }) }) }) },
     ContentService: { MimeType: { JAVASCRIPT: 'js', JSON: 'json', TEXT: 'text' }, createTextOutput: text => ({ setMimeType: mime => ({ text, mime }) }) },
     HtmlService: { XFrameOptionsMode: { ALLOWALL: 'allow' }, createHtmlOutput: html => ({ setXFrameOptionsMode: () => ({ html }) }) },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: key => ({ TELEGRAM_BOT_TOKEN: telegram.token, TELEGRAM_CHAT_ID: telegram.chatId })[key] }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: key => ({ ENABLE_LEGACY_LEADS: legacy ? 'true' : null, TELEGRAM_BOT_TOKEN: telegram.token, TELEGRAM_CHAT_ID: telegram.chatId })[key] }) },
     UrlFetchApp: { fetch: (url, options) => {
       telegramMessages.push({ url, body: JSON.parse(options.payload) });
       return { getResponseCode: () => telegram.status, getContentText: () => JSON.stringify({ ok: telegram.ok }) };
@@ -182,10 +182,10 @@ test('Telegram configuration and delivery errors return diagnostic codes without
 test('version endpoint and rejected lead always expose a safe diagnostic code', () => {
   const { context } = makeApi();
   const version = JSON.parse(context.doGet({ parameter: { action: 'version' } }).text);
-  assert.equal(version.version, '2026-10-04.2');
+  assert.equal(version.version, '2026-11-11.1');
   const html = context.doPost({ parameter: { action: 'lead', nonce: 'booking_123456789020_test' } }).html;
   assert.match(html, /"code":"INVALID_FORM"/);
-  assert.match(html, /"version":"2026-10-04.2"/);
+  assert.match(html, /"version":"2026-11-11.1"/);
 });
 
 test('lead status confirms delivery by nonce without exposing customer details', () => {
@@ -233,4 +233,25 @@ test('repair booking rechecks current price and sends authoritative work and cla
   assert.match(telegramMessages[0].body.text, /Кроссовер/);
   assert.match(telegramMessages[0].body.text, /900 ₽/);
   assert.match(telegramMessages[0].body.text, /Фильтр воздушный/);
+});
+
+
+
+test('Google lead delivery is disabled by default after migration', () => {
+  const { context, telegramMessages } = makeApi(false);
+  const result = JSON.parse(context.doPost({ parameter: { action: 'lead' } }).text);
+  assert.equal(result.code, 'LEADS_MOVED');
+  assert.equal(telegramMessages.length, 0);
+});
+test('hosting quote validates all paid booking kinds without Telegram calls', () => {
+  const { context, tables, telegramMessages } = makeApi(false);
+  const get = p => JSON.parse(context.doGet({ parameter: { action: 'bookingQuote', ...p } }).text);
+  assert.equal(get({kind:'maintenance',modelId:'M001',type:'ТО 15 000',priceId:'P0001'}).price,16646);
+  assert.equal(get({kind:'maintenance',modelId:'M001',type:'ТО 15 000',priceId:'fake'}).code,'INVALID_QUOTE');
+  assert.equal(get({kind:'offer',offerId:'O001'}).price,2999);
+  tables.Акции[1][3] = false;
+  assert.equal(get({kind:'offer',offerId:'O001'}).code,'OFFER_UNAVAILABLE');
+  assert.equal(get({kind:'repair',workId:'W001',classId:'sedan'}).price,500);
+  assert.equal(get({kind:'repair',workId:'W001',classId:'__proto__'}).code,'REPAIR_UNAVAILABLE');
+  assert.equal(telegramMessages.length,0);
 });

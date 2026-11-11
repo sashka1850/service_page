@@ -1,0 +1,18 @@
+name: Lead migration checks
+on:
+  push:
+    branches: [feat/regru-leads]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - run: npm run build && node --check src/site.js
+      - run: php -l api/lead.php && php -l api/lead-lib.php && php -l server/config.example.php
+      - run: php tests/php/lead-test.php
+      - run: python3 tests/php/endpoint-test.py

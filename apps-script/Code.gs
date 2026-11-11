@@ -1,5 +1,5 @@
 /** Web app bound to the price spreadsheet (Extensions → Apps Script). */
-var SCT_API_VERSION = '2026-10-04.2';
+var SCT_API_VERSION = '2026-11-11.1';
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var callback = p.callback || '';
@@ -10,6 +10,7 @@ function doGet(e) {
   var result;
   try {
     if (p.action === 'version') result = { ok: true, version: SCT_API_VERSION };
+    else if (p.action === 'bookingQuote') result = bookingQuote_(p);
     else if (p.action === 'leadStatus') {
       var requestNonce = String(p.nonce || '');
       if (!/^[a-zA-Z0-9_]{12,100}$/.test(requestNonce)) {
@@ -50,6 +51,11 @@ function doGet(e) {
 
 /** Form POST keeps the customer's name and phone out of URLs and browser history. */
 function doPost(e) {
+  // Disabled after migration. Only explicitly enabled legacy installations may send.
+  if (PropertiesService.getScriptProperties().getProperty('ENABLE_LEGACY_LEADS') !== 'true') {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, code: 'LEADS_MOVED' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
   var p = (e && e.parameter) || {};
   var nonce = String(p.nonce || '');
   var result = { source: 'sct-booking', version: SCT_API_VERSION,
@@ -346,4 +352,33 @@ function readRepairs_() {
   });
   return { ok: true, classes: classes, works: works, currency: 'RUB',
     hint: hintRows.length ? String(hintRows[0][1] || '') : '' };
+}
+
+
+/** Public read-only quote: accepts service identifiers only, never customer data. */
+function bookingQuote_(p) {
+  var fail = function(code) { return { ok: false, code: code }; };
+  if (p.kind === 'maintenance') {
+    var db = readDatabase_();
+    var prices = db.prices.filter(function(r) { return r.modelId === p.modelId && r.type === p.type && r.priceId === p.priceId; });
+    var cars = db.models.filter(function(r) { return r.modelId === p.modelId; });
+    if (prices.length !== 1 || cars.length !== 1) return fail('INVALID_QUOTE');
+    return { ok: true, price: prices[0].price, lines: [
+      'Автомобиль: ' + cars[0].brand + ' ' + cars[0].model + ' — ' + cars[0].variant,
+      'Услуга: ' + prices[0].type, 'ID цены: ' + prices[0].priceId] };
+  }
+  if (p.kind === 'offer') {
+    var offers = readOffers_(true).filter(function(r) { return r.offerId === p.offerId; });
+    if (offers.length !== 1) return fail('OFFER_UNAVAILABLE');
+    return { ok: true, price: offers[0].price, lines: ['Акция: ' + offers[0].title, 'ID акции: ' + offers[0].offerId] };
+  }
+  if (p.kind === 'repair') {
+    var repairs = readRepairs_();
+    var works = repairs.works.filter(function(r) { return r.workId === p.workId; });
+    var classes = repairs.classes.filter(function(r) { return r.classId === p.classId; });
+    if (works.length !== 1 || classes.length !== 1 || !Object.prototype.hasOwnProperty.call(works[0].prices, p.classId)) return fail('REPAIR_UNAVAILABLE');
+    return { ok: true, price: works[0].prices[p.classId], lines: ['Класс авто: ' + classes[0].label,
+      'Работа: ' + works[0].title, 'Трудоемкость: ' + works[0].hours[p.classId] + ' нч', 'ID работы: ' + works[0].workId] };
+  }
+  return fail('INVALID_KIND');
 }
