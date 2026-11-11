@@ -1608,3 +1608,11 @@ select:disabled {
 .repair-retry { margin-top:12px; border:0; background:none; text-decoration:underline; color:var(--ink); font:inherit; cursor:pointer; }
 @media(max-width:560px) { .calculator-tabs,.engine-tabs { --tabs-gap:12px; } .calculator-tabs button { font-size:18px; } #repair-form .form-row { grid-template-columns:1fr; } #repair-work { font-size:16px; } }
 @media(prefers-reduced-motion:reduce) { .animated-tabs .tabs-indicator { transition:none; transform:scaleX(1); } }
+
+/* Keep temporarily disabled sections hidden regardless of layout rules. */
+section[hidden] { display:none !important; }
+
+/* Three desktop cards and a small preview of the fourth. */
+@media (min-width: 801px) {
+  #space .space-card { flex-basis:calc((93% - 72px) / 3); }
+}
