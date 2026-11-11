@@ -35,7 +35,6 @@ export const spaceAlbums = [
     { src: './assets/client_area/client_area_3.jpg', alt: 'Интерьер клиентской зоны' },
   ],
   [
-    { src: './assets/repair/repair_1.jpg', alt: 'Рабочий процесс в сервисном центре' },
     { src: './assets/repair/repair_2.jpg', alt: 'Диагностика подвески автомобиля' },
     { src: './assets/repair/repair_3.jpg', alt: 'Компьютерная диагностика автомобиля' },
     { src: './assets/repair/repair_4.jpg', alt: 'Ремонт автомобиля в сервисном центре' },
