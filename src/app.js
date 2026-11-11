@@ -287,7 +287,9 @@ async function leadRequest(params, status = false) {
 function applyLeadResult(result) {
   if (result.ok && result.status === 'sent') return showBookingResult('success');
   if (['pending', 'unknown'].includes(result.status)) return showBookingResult('uncertain');
-  if (['PRICE_CHANGED', 'OFFER_UNAVAILABLE', 'REPAIR_UNAVAILABLE', 'INVALID_QUOTE'].includes(result.code)) {
+  if (result.code === 'CONSENT_OUTDATED') {
+    showBookingResult('failure', 'Текст согласия обновился. Обновите страницу, ознакомьтесь с актуальным согласием и отправьте заявку ещё раз.');
+  } else if (['PRICE_CHANGED', 'OFFER_UNAVAILABLE', 'REPAIR_UNAVAILABLE', 'INVALID_QUOTE'].includes(result.code)) {
     showBookingResult('failure', 'Стоимость или доступность услуги изменилась. Обновите страницу и выполните расчет заново.');
   } else {
     const code = /^[A-Z_]{3,40}$/.test(result.code) ? result.code : 'SEND_FAILED';
@@ -314,7 +316,7 @@ bookingForm.addEventListener('submit', async event => {
   showBookingResult('sending');
   const fields = { ...booking, action: 'lead', nonce,
     name: bookingName.value.trim(), phone: phoneDigits(bookingPhone.value),
-    consent: 'yes', website: $('#booking-website').value };
+    consent: 'yes', consentVersion: config.consentVersion, website: $('#booking-website').value };
   try {
     const result = await leadRequest(fields);
     if (activeBookingNonce !== nonce) return;

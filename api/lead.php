@@ -50,9 +50,11 @@ try {
     $rawState = stream_get_contents($file);
     $state = $rawState === '' ? ['leads'=>[], 'rates'=>[]] : json_decode($rawState,true);
     if (!is_array($state) || !isset($state['leads'],$state['rates'])) throw new LeadError('STORAGE_UNAVAILABLE');
+    $beforeCleanup = $state;
     $now = time();
-    foreach ($state['leads'] as $id=>$entry) if ($entry['at'] < $now-86400) unset($state['leads'][$id]);
+    foreach ($state['leads'] as $id=>$entry) if ($entry['at'] < $now-30*86400) unset($state['leads'][$id]);
     foreach ($state['rates'] as $id=>$entry) if ($entry['at'] < $now-600) unset($state['rates'][$id]);
+    if ($state !== $beforeCleanup) saveState($file, $state);
     $entry = $state['leads'][$nonce] ?? null;
     if ($method === 'GET') respond(['ok'=>($entry['status'] ?? '') === 'sent', 'status'=>$entry['status'] ?? 'unknown', 'code'=>$entry['code'] ?? null]);
     $fingerprint = hash_hmac('sha256', json_encode($lead, JSON_THROW_ON_ERROR), $config['state_key']);
@@ -78,9 +80,11 @@ try {
         if ($reply['status'] !== 200) throw new LeadError('PRICE_SERVICE_UNAVAILABLE');
         $quote = $reply['body'];
     }
+    $lead['consentAt'] = gmdate('Y-m-d\TH:i:s\Z', $now);
     $text = leadMessage($lead,$quote);
     // Persist before contacting Telegram. Ambiguous network failures never auto-resend.
-    $state['leads'][$nonce] = ['at'=>$now,'status'=>'unknown','fingerprint'=>$fingerprint];
+    $state['leads'][$nonce] = ['at'=>$now,'status'=>'unknown','fingerprint'=>$fingerprint,
+        'consent'=>['version'=>$lead['consentVersion'],'accepted_at'=>$lead['consentAt']]];
     saveState($file,$state);
     $telegramAttempted = true;
     $reply = leadHttp('https://api.telegram.org/bot'.$config['token'].'/sendMessage', ['chat_id'=>$config['chat_id'],'text'=>$text]);

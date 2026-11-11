@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory() as tmp:
             response = e
         return response.code,json.loads(response.read())
     def form(n=1, **changes):
-        return dict(nonce='booking_'+f'{n:032x}',name='Анна',phone='+79991234567',kind='callback',consent='yes',website='',**changes)
+        return dict(nonce='booking_'+f'{n:032x}',name='Анна',phone='+79991234567',kind='callback',consent='yes',consentVersion='2026-11-11.1',website='',**changes)
     def calls(): return [json.loads(x) for x in (private/'calls').read_text().splitlines()]
     def reset():
         (private/'lead-state.json').unlink(missing_ok=True)
@@ -39,6 +39,9 @@ with tempfile.TemporaryDirectory() as tmp:
         assert len(calls()) == 1, 'duplicate must not send twice'
         assert request(query='?action=status&nonce='+form()['nonce'])[1]['status'] == 'sent'
         state = (private/'lead-state.json').read_text()
+        receipt = json.loads(state)['leads'][form()['nonce']]['consent']
+        assert receipt['version'] == '2026-11-11.1' and receipt['accepted_at'].endswith('Z')
+        assert 'Версия согласия' in json.loads(calls()[0]['payload'])['text']
         assert 'Анна' not in state and '79991234567' not in state
         reset()
         repair = form(2, workId='W001',classId='sedan',expectedPrice=500)

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+const SCT_CONSENT_VERSION = '2026-11-11.1';
+
 final class LeadError extends RuntimeException {}
 function leadField(array $p, string $key, int $max = 200): string {
     $v = $p[$key] ?? '';
@@ -11,6 +13,7 @@ function leadValidate(array $p): array {
     $nonce = leadField($p, 'nonce', 100);
     if (!preg_match('/^booking_[a-f0-9]{32}$/D', $nonce)) throw new LeadError('INVALID_FORM');
     if (leadField($p, 'consent') !== 'yes' || leadField($p, 'website') !== '') throw new LeadError('INVALID_FORM');
+    if (leadField($p, 'consentVersion', 40) !== SCT_CONSENT_VERSION) throw new LeadError('CONSENT_OUTDATED');
     $name = preg_replace('/\s+/u', ' ', leadField($p, 'name', 320));
     if (!preg_match("/^[\p{L}][\p{L}\s.'-]{1,79}$/uD", $name)) throw new LeadError('INVALID_NAME');
     $phone = preg_replace('/\D/', '', leadField($p, 'phone', 40));
@@ -19,7 +22,7 @@ function leadValidate(array $p): array {
     if (!preg_match('/^7[0-9]{10}$/D', $phone)) throw new LeadError('INVALID_PHONE');
     $kind = leadField($p, 'kind', 20);
     if (!in_array($kind, ['callback','custom','maintenance','offer','repair'], true)) throw new LeadError('INVALID_KIND');
-    $r = ['nonce'=>$nonce, 'name'=>$name, 'phone'=>'+'.$phone, 'kind'=>$kind];
+    $r = ['nonce'=>$nonce, 'name'=>$name, 'phone'=>'+'.$phone, 'kind'=>$kind, 'consentVersion'=>SCT_CONSENT_VERSION];
     if ($kind === 'custom') {
         $r['request'] = leadField($p, 'request', 4000);
         if ($r['request'] === '' || preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f]/', $r['request']) || preg_match_all('/./us', $r['request']) > 1000) throw new LeadError('INVALID_REQUEST');
@@ -61,6 +64,8 @@ function leadMessage(array $p, ?array $quote): string {
         $lines[] = 'Стоимость: '.$price.' ₽';
     }
     $lines[] = 'Согласие на обработку данных: да';
+    $lines[] = 'Версия согласия: '.$p['consentVersion'];
+    if (isset($p['consentAt'])) $lines[] = 'Дата согласия (UTC): '.$p['consentAt'];
     $lines[] = 'ID заявки: '.$p['nonce'];
     $text = implode("\n", $lines);
     if (preg_match_all('/./us', $text) > 4000) throw new LeadError('INVALID_REQUEST');

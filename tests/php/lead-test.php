@@ -6,7 +6,7 @@ function rejects(callable $fn, string $code): void {
     try { $fn(); } catch (LeadError $e) { check($e->getMessage() === $code, 'wrong error: '.$e->getMessage()); return; }
     throw new RuntimeException('expected '.$code);
 }
-$form = ['nonce'=>'booking_'.str_repeat('a',32),'name'=>'Анна','phone'=>'89991234567','kind'=>'callback','consent'=>'yes','website'=>''];
+$form = ['nonce'=>'booking_'.str_repeat('a',32),'name'=>'Анна','phone'=>'89991234567','kind'=>'callback','consent'=>'yes','consentVersion'=>SCT_CONSENT_VERSION,'website'=>''];
 $lead = leadValidate($form);
 check($lead['phone'] === '+79991234567','phone normalization');
 check(strpos(leadMessage($lead,null),'Анна') !== false,'callback message');
@@ -25,3 +25,5 @@ rejects(fn()=>leadMessage($repair,['ok'=>false,'code'=>'REPAIR_UNAVAILABLE']),'R
 rejects(fn()=>leadMessage($repair,['ok'=>false,'error'=>'private server trace']),'PRICE_SERVICE_UNAVAILABLE');
 rejects(fn()=>leadValidate(array_replace($form,['kind'=>'offer','offerId'=>'O001','expectedPrice'=>[]])),'PRICE_CHANGED');
 echo "PHP lead validation and quote tests passed\n";
+
+rejects(fn()=>leadValidate(array_replace($form,['consentVersion'=>'old'])),'CONSENT_OUTDATED');

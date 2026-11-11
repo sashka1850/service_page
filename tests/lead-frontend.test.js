@@ -9,7 +9,7 @@ function setup(reply = {ok:true,status:'sent'}) {
   const handlers = {}, requests = [], states = [];
   const context = vm.createContext({
     URL, AbortController, setTimeout, clearTimeout, crypto:webcrypto,
-    location:{href:'https://sct-52.ru/',origin:'https://sct-52.ru'},config:{leadApiUrl:'./api/lead.php'},
+    location:{href:'https://sct-52.ru/',origin:'https://sct-52.ru'},config:{leadApiUrl:'./api/lead.php',consentVersion:'2026-11-11.1'},
     bookingForm:{addEventListener:(type,fn)=>handlers[type]=fn},
     bookingResultCheck:{addEventListener:(_,fn)=>handlers.check=fn},
     bookingName:{value:'Анна'},bookingPhone:{value:'+79991234567'},
@@ -28,6 +28,7 @@ test('booking sends contacts to same-origin PHP and cannot submit twice',async()
   assert.equal(requests.length,1);
   assert.equal(requests[0].url,'https://sct-52.ru/api/lead.php');
   const body=JSON.parse(requests[0].body);
+  assert.equal(body.consentVersion,'2026-11-11.1');
   assert.equal(body.name,'Анна'); assert.equal(body.priceId,'P0001');
   assert.match(body.nonce,/^booking_[a-f0-9]{32}$/);
   assert.deepEqual(states,['sending','success']);
