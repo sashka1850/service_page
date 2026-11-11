@@ -37,7 +37,6 @@ const spaceAlbums = [
     { src: './assets/client_area/client_area_3.jpg', alt: 'Интерьер клиентской зоны' },
   ],
   [
-    { src: './assets/repair/repair_1.jpg', alt: 'Рабочий процесс в сервисном центре' },
     { src: './assets/repair/repair_2.jpg', alt: 'Диагностика подвески автомобиля' },
     { src: './assets/repair/repair_3.jpg', alt: 'Компьютерная диагностика автомобиля' },
     { src: './assets/repair/repair_4.jpg', alt: 'Ремонт автомобиля в сервисном центре' },
@@ -108,6 +107,9 @@ function initRepairCalculator({ apiRequest, openBooking, money }) {
   }
   async function load() {
     if (catalog || loading) return loading;
+    car.disabled = true;
+    car.replaceChildren(new Option('Загрузка..', ''));
+    car.setAttribute('aria-busy', 'true');
     status.textContent = 'Загружаем работы и цены…';
     retry.hidden = true;
     loading = (async () => {
@@ -123,7 +125,11 @@ function initRepairCalculator({ apiRequest, openBooking, money }) {
       } catch (error) {
         status.textContent = 'Не удалось загрузить работы. Попробуйте еще раз.';
         retry.hidden = false;
-      } finally { loading = null; }
+      } finally {
+        if (!catalog) car.replaceChildren(new Option('Выберите класс авто', ''));
+        car.setAttribute('aria-busy', 'false');
+        loading = null;
+      }
     })();
     return loading;
   }
@@ -731,6 +737,45 @@ function setupMobileCardProgress() {
 }
 
 setupMobileCardProgress();
+
+// Hover over the clipped edge card to travel between the strip's ends.
+function setupSpaceEdgeHover() {
+  const scroller = document.querySelector('#space .space-grid');
+  if (!scroller) return;
+  const desktopMouse = window.matchMedia('(min-width: 801px) and (hover: hover) and (pointer: fine)');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let moving = false;
+  let settleTimer;
+  const settle = () => { moving = false; };
+  scroller.addEventListener('scroll', () => {
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(settle, 180);
+  }, { passive: true });
+  scroller.addEventListener('scrollend', settle);
+  // Require actual pointer movement so cards passing under a stationary mouse
+  // cannot send the strip straight back in the opposite direction.
+  scroller.addEventListener('pointermove', event => {
+    if (!desktopMouse.matches || event.pointerType !== 'mouse' || moving) return;
+    const card = event.target.closest('.space-card');
+    if (!card || card.parentElement !== scroller) return;
+    const max = scroller.scrollWidth - scroller.clientWidth;
+    if (max <= 2) return;
+    const viewport = scroller.getBoundingClientRect();
+    const bounds = card.getBoundingClientRect();
+    const atStart = scroller.scrollLeft <= 2;
+    const atEnd = scroller.scrollLeft >= max - 2;
+    let target;
+    if (atStart && bounds.left < viewport.right && bounds.right > viewport.right + 2) target = max;
+    if (atEnd && bounds.left < viewport.left - 2 && bounds.right > viewport.left) target = 0;
+    if (target === undefined) return;
+    moving = true;
+    scroller.scrollTo({ left: target, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(settle, 1200);
+  });
+}
+setupSpaceEdgeHover();
+
 
 const contactWidget = $('.contact-widget');
 if (contactWidget) {

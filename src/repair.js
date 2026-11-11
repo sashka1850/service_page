@@ -54,6 +54,9 @@ export function initRepairCalculator({ apiRequest, openBooking, money }) {
   }
   async function load() {
     if (catalog || loading) return loading;
+    car.disabled = true;
+    car.replaceChildren(new Option('Загрузка..', ''));
+    car.setAttribute('aria-busy', 'true');
     status.textContent = 'Загружаем работы и цены…';
     retry.hidden = true;
     loading = (async () => {
@@ -69,7 +72,11 @@ export function initRepairCalculator({ apiRequest, openBooking, money }) {
       } catch (error) {
         status.textContent = 'Не удалось загрузить работы. Попробуйте еще раз.';
         retry.hidden = false;
-      } finally { loading = null; }
+      } finally {
+        if (!catalog) car.replaceChildren(new Option('Выберите класс авто', ''));
+        car.setAttribute('aria-busy', 'false');
+        loading = null;
+      }
     })();
     return loading;
   }
