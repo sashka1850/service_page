@@ -6,6 +6,7 @@ export const config = {
   house: '52д',
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/main_video.mp4', // Локальный путь, например ./assets/hero.mp4.
+  leadApiUrl: './api/lead.php', // PHP на том же домене; персональные данные в Google не отправляются.
   maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
 };
 export const services = [
@@ -47,3 +48,4 @@ export const spaceAlbums = [
     { src: './assets/tools/tool_6.jpg', alt: 'Оборудование ремонтной зоны' },
   ],
 ];
+

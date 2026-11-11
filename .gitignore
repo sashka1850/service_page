@@ -1,7 +1,10 @@
 node_modules/
-.DS_Store
 .env
 .env.*
 !.env.example
+server/config.php
+sct-private/
+*.log
+.DS_Store
 __pycache__/
 artifacts/

@@ -9,6 +9,7 @@ const config = {
   house: '52д',
   hours: '', // Подтвердить режим из наброска: ежедневно 09:00–21:00.
   heroVideo: './assets/main_video.mp4', // Локальный путь, например ./assets/hero.mp4.
+  leadApiUrl: './api/lead.php', // PHP на том же домене; персональные данные в Google не отправляются.
   maintenanceApiUrl: 'https://script.google.com/macros/s/AKfycbywj_kGPQSc5q6INEe4BN16CkNQn37IqG3JRzYS3Vmm1tN1RTzAVJe5ncyZvidUjnMg/exec',
 };
 const services = [
@@ -50,6 +51,7 @@ const spaceAlbums = [
     { src: './assets/tools/tool_6.jpg', alt: 'Оборудование ремонтной зоны' },
   ],
 ];
+
 
 function searchWorks(works, classId, query) {
   const normalize = value => String(value).toLocaleLowerCase('ru').replace(/ё/g, 'е').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
@@ -185,6 +187,7 @@ function initRepairCalculator({ apiRequest, openBooking, money }) {
       `Ремонт · ${car.selectedOptions[0].textContent} · ${selected.title} · ${money(selected.prices[car.value])}`);
   });
 }
+
 
 const $ = (selector) => document.querySelector(selector);
 const money = (value) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(value);
@@ -449,90 +452,70 @@ bookingResultRetry.addEventListener('click', () => {
   updateBookingValidity();
   bookingSubmit.focus();
 });
+async function leadRequest(params, status = false) {
+  const endpoint = new URL(config.leadApiUrl, location.href);
+  if (!/^https?:$/.test(endpoint.protocol) || endpoint.origin !== location.origin) throw new Error('LEAD_ENDPOINT_UNAVAILABLE');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45000);
+  try {
+    if (status) {
+      endpoint.searchParams.set('action', 'status');
+      endpoint.searchParams.set('nonce', params.nonce);
+    }
+    const response = await fetch(endpoint, {
+      method: status ? 'GET' : 'POST', credentials: 'same-origin', cache: 'no-store',
+      headers: status ? {} : { 'Content-Type': 'application/json' },
+      body: status ? undefined : JSON.stringify(params), signal: controller.signal
+    });
+    const result = await response.json();
+    if (status && !response.ok) throw new Error('STATUS_UNAVAILABLE');
+    if (!result || typeof result.ok !== 'boolean') throw new Error('INVALID_RESPONSE');
+    return result;
+  } finally { clearTimeout(timer); }
+}
+function applyLeadResult(result) {
+  if (result.ok && result.status === 'sent') return showBookingResult('success');
+  if (['pending', 'unknown'].includes(result.status)) return showBookingResult('uncertain');
+  if (['PRICE_CHANGED', 'OFFER_UNAVAILABLE', 'REPAIR_UNAVAILABLE', 'INVALID_QUOTE'].includes(result.code)) {
+    showBookingResult('failure', 'Стоимость или доступность услуги изменилась. Обновите страницу и выполните расчет заново.');
+  } else {
+    const code = /^[A-Z_]{3,40}$/.test(result.code) ? result.code : 'SEND_FAILED';
+    showBookingResult('failure', `Не удалось отправить заявку. Вы можете позвонить нам. Код: ${code}.`);
+  }
+}
 bookingResultCheck.addEventListener('click', async () => {
-  if (!activeBookingNonce) return;
+  const nonce = activeBookingNonce;
+  if (!nonce) return;
   showBookingResult('sending');
   try {
-    const result = await apiRequest({ action: 'leadStatus', nonce: activeBookingNonce });
-    showBookingResult(result.ok && result.status === 'sent' ? 'success' : 'uncertain');
-  } catch (_) { showBookingResult('uncertain'); }
+    const result = await leadRequest({ nonce }, true);
+    if (activeBookingNonce === nonce) applyLeadResult(result);
+  } catch (_) { if (activeBookingNonce === nonce) showBookingResult('uncertain'); }
 });
-bookingForm.addEventListener('submit', event => {
+bookingForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!updateBookingValidity() || bookingPending || bookingSent || !selectedBooking) return;
   const booking = { ...selectedBooking };
+  const nonce = `booking_${crypto.randomUUID().replaceAll('-', '')}`;
+  activeBookingNonce = nonce;
   bookingPending = true;
   updateBookingValidity();
-  const nonce = `booking_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  activeBookingNonce = nonce;
   showBookingResult('sending');
-  const transport = document.createElement('form');
-  transport.method = 'POST';
-  transport.action = config.maintenanceApiUrl;
-  transport.target = 'booking-transport';
-  transport.hidden = true;
-  const fields = { action: 'lead', nonce, name: bookingName.value.trim(), phone: phoneDigits(bookingPhone.value),
-    consent: 'yes', kind: booking.kind, website: '' };
-  if (booking.kind === 'offer') {
-    fields.offerId = booking.offerId;
-    fields.expectedPrice = booking.expectedPrice;
-  } else if (booking.kind === 'repair') {
-    fields.workId = booking.workId;
-    fields.classId = booking.classId;
-    fields.expectedPrice = booking.expectedPrice;
-  } else if (booking.kind === 'custom') {
-    fields.request = booking.request;
-  } else if (booking.kind === 'maintenance') {
-    fields.modelId = booking.modelId;
-    fields.type = booking.type;
-    fields.priceId = booking.priceId;
-  }
-  Object.entries(fields).forEach(([key, value]) => {
-    const field = document.createElement('input');
-    field.name = key; field.value = value; transport.append(field);
-  });
-  document.body.append(transport);
-  let completed = false;
-  let statusChecks = 0, statusTimer;
-  const finish = (mode, detail = '') => {
-    if (completed) return;
-    completed = true;
-    clearTimeout(timer);
-    clearTimeout(statusTimer);
-    window.removeEventListener('message', receive);
-    transport.remove();
+  const fields = { ...booking, action: 'lead', nonce,
+    name: bookingName.value.trim(), phone: phoneDigits(bookingPhone.value),
+    consent: 'yes', website: $('#booking-website').value };
+  try {
+    const result = await leadRequest(fields);
     if (activeBookingNonce !== nonce) return;
-    bookingPending = false;
-    bookingSent = mode !== 'failure';
-    showBookingResult(mode, detail);
-    updateBookingValidity();
-  };
-  const pollStatus = async () => {
-    if (completed || activeBookingNonce !== nonce) return;
-    statusChecks++;
-    try {
-      const result = await apiRequest({ action: 'leadStatus', nonce });
-      if (completed) return;
-      if (result.ok && result.status === 'sent') { finish('success'); return; }
-    } catch (_) { /* A missing status response does not prove delivery failed. */ }
-    if (completed) return;
-    if (statusChecks >= 8) finish('uncertain');
-    else statusTimer = window.setTimeout(pollStatus, 4000);
-  };
-  const receive = event => {
-    if (!/^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(event.origin) && event.origin !== 'https://script.google.com') return;
-    if (event.data?.source !== 'sct-booking' || event.data.nonce !== nonce) return;
-    if (['PRICE_CHANGED', 'OFFER_UNAVAILABLE', 'REPAIR_UNAVAILABLE'].includes(event.data.code)) {
-      finish('failure', 'Стоимость или доступность услуги изменилась. Обновите страницу и выполните расчет заново.');
-      return;
-    }
-    const errorCode = /^[A-Z_]{3,40}$/.test(event.data.code) ? event.data.code : 'NO_CODE';
-    finish(event.data.ok ? 'success' : 'failure', event.data.ok ? ''
-      : `Извините, Ваша заявка не была отправлена. Вы можете связаться с нами. Код: ${errorCode}.`);
-  };
-  window.addEventListener('message', receive);
-  const timer = window.setTimeout(pollStatus, 18000);
-  transport.submit();
+    bookingSent = result.status !== 'failed';
+    applyLeadResult(result);
+  } catch (_) {
+    if (activeBookingNonce !== nonce) return;
+    bookingSent = true;
+    showBookingResult('uncertain');
+  } finally {
+    if (activeBookingNonce === nonce) { bookingPending = false; updateBookingValidity(); }
+  }
 });
 loadCatalog();
 loadOffers();
@@ -971,5 +954,6 @@ document.querySelectorAll('.space-card, .team-card').forEach((card) => {
   gallery.querySelectorAll('.gallery-arrow').forEach(arrow => { arrow.hidden = photos.length < 2; });
   show(0);
 });
+
 
 })();
